@@ -67,3 +67,31 @@ El modelo predice `log(brent[t+h] / brent[t])`, y el precio se recupera con
   fugas.
 - El escalador (`StandardScaler`) se ajusta solo con los datos de train.
 - Ventana de entrada: 60 días hábiles, igual para las tres redes.
+
+## Modelos (`petroleo/modelos.py`)
+
+### Una sola arquitectura para las tres redes
+
+`Recurrente(tipo, ...)` es la misma red para `rnn`, `lstm` y `gru`: solo cambia la
+capa recurrente (`nn.RNN`, `nn.LSTM` o `nn.GRU`). La entrada, el tamaño oculto, el
+número de capas y la salida (una capa lineal sobre el estado del último día) son
+iguales. Así la comparación mide solo el tipo de memoria.
+
+### Un modelo por horizonte
+
+Se entrena una red distinta para 5, 63 y 252 días. Cada horizonte tiene un número
+distinto de muestras válidas (ver partición), y una red que predijera los tres a la
+vez tendría que quedarse con las del más largo.
+
+### Número de parámetros
+
+Con el mismo tamaño oculto, la LSTM tiene unas 4 veces más parámetros que la RNN y la
+GRU unas 3 veces más (con 64 neuronas y 15 variables: RNN 5.249, GRU 15.617,
+LSTM 20.801). No se igualan a mano: las tres reciben la misma rejilla de
+hiperparámetros ("presupuesto similar de ajuste") y el número de parámetros va en la
+tabla comparativa.
+
+### Modelo ingenuo
+
+`ingenuo(X)` predice una log-rentabilidad de 0, es decir, "el precio futuro es el de
+hoy". Es la referencia que las redes tienen que mejorar.
