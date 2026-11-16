@@ -1,0 +1,11 @@
+# Parámetros comunes a las tres redes (RNN, LSTM, GRU): mismas condiciones.
+ventana: 60            # días hábiles de entrada
+
+horizontes:            # días hábiles a predecir
+  corto: 5             # 1 semana
+  medio: 63            # ~3 meses
+  largo: 252           # ~12 meses
+
+particion:             # fechas de corte (incluidas en su partición)
+  fin_train: '2017-12-31'
+  fin_val:   '2020-12-31'   # test: de 2021 a hoy (2022 y 2026 incluidos)
