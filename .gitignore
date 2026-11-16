@@ -221,3 +221,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Datos (nunca se suben)
+data/
+
+# Archivos de asistentes de IA (nunca se suben)
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.claude/
+graphify-out/
