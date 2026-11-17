@@ -231,3 +231,7 @@ CLAUDE.md
 GEMINI.md
 .claude/
 graphify-out/
+
+# Resultados pesados o regenerables
+docs/resultados/**/predicciones_val_*.csv.gz
+docs/resultados/**/log_*.txt
