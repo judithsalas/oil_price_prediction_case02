@@ -310,6 +310,64 @@ simulación con dos modelos iguales cuántas veces da p < 0,05 (debería ser un 
 periodos de un año independientes, y ningún contraste es fiable. A 252 días un
 p < 0,05 no basta para concluir nada.
 
+### Tabla comparativa (`scripts/comparar.py`)
+
+`docs/resultados/comparativa.csv` junta, para cada red y horizonte, lo que pide el
+enunciado: MAE y RMSE en dólares, mejora frente al ingenuo (validación y test),
+parámetros, tiempo de entrenamiento y estabilidad entre semillas. No vuelve a
+evaluar: lee las previsiones de test ya guardadas.
+
+| | Validación 5 / 63 / 252 d | Test 5 / 63 / 252 d | RMSE test ($) 5 / 63 / 252 d | Parámetros 5 / 63 / 252 d | Segundos por semilla |
+|---|---|---|---|---|---|
+| Ingenuo | 0 / 0 / 0 | 0 / 0 / 0 | 5,50 / 17,09 / 25,34 | 0 | 0 |
+| RNN | +1,0 / +1,5 / −18 | −2,1 / +1,1 / −39 | 5,55 / 17,34 / 30,51 | 1.089 / 1.089 / 3.713 | 3–5 |
+| LSTM | +1,3 / **+12,9** / **+6,5** | −3,4 / −26 / −55 | 5,59 / 19,82 / 32,01 | 14.753 / 6.305 / 20.801 | 2–8 |
+| GRU | **+1,5** / +9,4 / −6,4 | −2,0 / +1,5 / −48 | 5,53 / 17,39 / 29,96 | 15.617 / 40.577 / 3.233 | 7–20 |
+
+Todas entrenan en segundos en CPU: el coste no decide nada.
+
+### Modelo de la app: se elige por validación
+
+En cada horizonte, la red con mayor mejora en validación walk-forward (predicción
+media de las 3 semillas): **GRU a 5 días, LSTM a 63 y a 252 días**. Es la regla de
+siempre y se aplica aunque en test la LSTM sea la peor: cambiarla ahora por la GRU
+sería elegir con el test. Los cuatro repositorios de referencia hacen lo mismo, y a
+Rubén y Alejandro también les falló en test la red elegida en validación.
+
+Lo que la app debe decir con esto (enunciado, punto 5):
+
+- **1 semana:** la previsión es prácticamente el precio de hoy. Lo útil es el rango.
+- **3 meses:** en validación la LSTM mejoraba un 13 %, pero en test no se sostiene.
+  Valor bajo: orientativo.
+- **1 año:** ningún modelo bate al ingenuo en test. Solo vale el rango, y es poco fiable
+  (ver abajo).
+
+### Rango de incertidumbre (intervalo del 80 %)
+
+Para cada red y horizonte se toman los percentiles 10 y 90 de sus errores fuera de
+muestra en los 3 pliegues walk-forward (2012–2020, 9 años: incluye las caídas de
+2014–16 y 2020). El intervalo es la previsión más esos dos percentiles. Con solo la
+validación final (2018–2020) a 252 días salía −48 % / +3 %, dominado por la caída de
+2020, y se descartó.
+
+Después se midió **una sola vez** cuántas veces el precio real de test cayó dentro,
+sin cambiar nada:
+
+| Horizonte | Intervalo (modelo elegido) | Cobertura en test | Ingenuo |
+|---|---|---|---|
+| 5 días | −5,8 % / +5,2 % | 71 % | 71 % |
+| 63 días | −24,5 % / +17,5 % | 74 % | 84 % |
+| 252 días | −35,1 % / +20,0 % | 52 % | 70 % |
+
+- Por debajo del 80 % en los tres: 2021–2026 ha sido más volátil que 2012–2020. A
+  Alejandro le pasa lo mismo (48–58 % en 2026); Rubén obtiene 79–87 %.
+- A 252 días el fallo se concentra en 2021 (8 % dentro: el Brent subió más del 60 % tras
+  la pandemia, muy por encima del +20 %) y 2025 (38 %). En 2022–2024 cubre el 67–75 %.
+  El intervalo está sesgado a la baja porque los años de calibración tienen dos
+  desplomes y ninguna subida tan fuerte.
+- La app debe mostrar el rango como "lo habitual", no como un límite, y avisar de que
+  a 1 año falla en movimientos excepcionales.
+
 ### Comparación con los repositorios de referencia
 
 Mismo enunciado, cuatro protocolos distintos. Cada uno usa su propia métrica y periodo
