@@ -18,6 +18,17 @@ class TestRecurrente(unittest.TestCase):
         self.assertLess(n['rnn'], n['gru'])
         self.assertLess(n['gru'], n['lstm'])
 
+    def test_memoria_ortogonal_y_olvido_de_la_lstm_a_1(self):
+        oculto = 16
+        for tipo in TIPOS:
+            red = Recurrente(tipo, ENTRADAS, oculto=oculto, capas=2).red
+            for puerta in red.weight_hh_l1.detach().split(oculto):
+                torch.testing.assert_close(puerta @ puerta.T, torch.eye(oculto),
+                                           atol=1e-5, rtol=0)
+        sesgo = Recurrente('lstm', ENTRADAS, oculto=oculto).red.bias_ih_l0.detach()
+        self.assertTrue((sesgo[oculto:2 * oculto] == 1).all())   # puerta f
+        self.assertEqual(sesgo[:oculto].abs().sum(), 0)           # puerta i
+
     def test_aprende_un_patron_sencillo(self):
         # y = media del último día: si no baja el error, algo está roto
         torch.manual_seed(0)
