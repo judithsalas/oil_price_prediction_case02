@@ -167,8 +167,9 @@ aprendizaje 0,001 o 0,0001 = 12 combinaciones. Todo lo demás es fijo: Adam, lot
 
 - Las 128 neuronas de la primera versión nunca ayudaron y las referencias acaban con
   redes pequeñas: se cambiaron por 16.
-- La tasa 0,0001 da pasos más pequeños y retrasa el sobreajuste. Ganó en los tres
-  horizontes y la eligen 8 de las 9 combinaciones ganadoras.
+- La tasa 0,0001 da pasos más pequeños y retrasa el sobreajuste. En la rejilla final
+  ayuda sobre todo a 252 días (mejora media −21 % frente a −27 % con 0,001) y empata
+  en los otros dos; la eligen 5 de las 9 combinaciones finales.
 
 ### Tres semillas: que la mejora no sea suerte
 
@@ -233,3 +234,148 @@ Errores divididos por el del ingenuo: 1 = igual que el ingenuo, por debajo = mej
 Nota: la validación ya no se usa para parar, pero se ha consultado en varios
 experimentos (v1 a v4), así que su error sigue siendo algo optimista. La cifra que
 cuenta es la de test, que se evalúa una sola vez.
+
+## Historial de experimentos
+
+Un experimento por fila. Mejora frente al ingenuo en validación walk-forward, con la
+mejor combinación de cada red (predicción media de las 3 semillas en v2–v4; media de
+las semillas en v1). Los CSV y figuras de cada uno están en `docs/resultados/<carpeta>`
+y `docs/figuras/<carpeta>` (v4 en la raíz).
+
+| Exp. | Cambio | 5 días (RNN / LSTM / GRU) | 63 días | 252 días | Brecha train-val (63 / 252 d) |
+|---|---|---|---|---|---|
+| v1 `v1_niveles` | Precios en nivel, parada con val, paciencia 5 | +3,4 / +0,9 / +1,0 | +5,7 / +9,7 / +0,6 | −74 / −27 / −94 | 0,47 / 0,93 |
+| v2 `v2_completo` | Bloque completo + volatilidad y nivel | +0,3 / +2,0 / +1,6 | −3,1 / +7,3 / −0,6 | −49 / +0,5 / −42 | 0,05 / 0,13 |
+| v3 `v3_sin_variables` | v2 sin volatilidad ni nivel (único cambio) | +0,6 / +1,4 / +1,1 | +5,8 / +10,5 / +9,3 | −24 / −1,1 / −11 | 0,03 / 0,17 |
+| v4 (final) | v3 recuperando el primer año de datos | +1,0 / +1,3 / +1,5 | +1,5 / +12,9 / +9,4 | −18 / +6,5 / −6,4 | 0,07 / 0,23 |
+
+- v1 usaba la validación para parar, así que sus cifras son optimistas: v1 y el
+  resto no son del todo comparables.
+- v2 → v3 es el único experimento de un solo cambio, y decidió quitar las dos
+  variables.
+- La brecha es la diferencia entre el error relativo de validación y el de train en
+  la mejor época. Con la regularización pasó de 0,5–0,9 a menos de 0,25.
+- La mejor época sigue llegando pronto (mediana 3–4; un 29 % en la época 1): con
+  rentabilidades del petróleo la señal es muy débil y la red empieza a memorizar
+  ruido enseguida. Con paciencia 10 las curvas siguen al menos 10 épocas más, así
+  que el mínimo se ve y se ve cómo la validación sube después.
+
+### Modelos finales (`models/final/`)
+
+| Horizonte | RNN | LSTM | GRU |
+|---|---|---|---|
+| 5 días | 16×2, lr 0,001 (1.089 parám.) | 32×2, lr 0,0001 (14.753) | 64×1, lr 0,001 (15.617) |
+| 63 días | 16×2, lr 0,001 (1.089) | 32×1, lr 0,001 (6.305) | 64×2, lr 0,0001 (40.577) |
+| 252 días | 32×2, lr 0,001 (3.713) | 64×1, lr 0,0001 (20.801) | 16×2, lr 0,0001 (3.233) |
+
+(neuronas × capas, dropout 0,2 en todas.)
+
+## Evaluación en test (`scripts/evaluar.py`)
+
+Test: 2021 hasta hoy. Se evaluó **una sola vez**, con los modelos ya elegidos, y no
+se ha cambiado nada después. Cada red predice con la media de sus 3 semillas. Ridge
+es una regresión lineal sobre la ventana aplanada, con el mismo objetivo sin tendencia
+y alfa elegido en validación.
+
+| Horizonte | Ridge | RNN | LSTM | GRU |
+|---|---|---|---|---|
+| 5 días | −6,3 % (p 0,04) | −2,1 % (p 0,03) | −3,4 % (p 0,10) | −2,0 % (p 0,17) |
+| 63 días | +1,3 % (p 0,90) | +1,1 % (p 0,88) | −26 % (p 0,16) | +1,5 % (p 0,90) |
+| 252 días | −11 % (p 0,36) | −39 % (p 0,26) | −55 % (p 0,04) | −48 % (p 0,0005) |
+
+Mejora del error cuadrático frente al ingenuo; p = Diebold-Mariano. Detalle en
+`docs/resultados/test.csv` (incluye error en dólares y acierto de dirección) y por
+año en `test_por_anio.csv` y `docs/figuras/test_por_anio.png`.
+
+**Conclusión: ningún modelo bate al ingenuo en test.**
+
+- A 5 días todos quedan un 2–6 % peor: el precio de hoy es la mejor previsión.
+- A 63 días RNN, GRU y Ridge empatan con el ingenuo (p ≈ 0,9). La LSTM, la mejor en
+  validación (+12,9 %), cae a −26 % en test, sobre todo por 2022–2024: es sobreajuste
+  a la validación al elegir entre 12 combinaciones, no algo que deba corregirse
+  mirando el test.
+- A 252 días todas pierden; el modelo más simple (Ridge) es el que menos pierde. En
+  2023–2024 las redes predijeron una vuelta al alza tras la bajada de 2022 que no
+  llegó.
+- El acierto de dirección ronda el 50 % en todos: no saben si el precio subirá o
+  bajará.
+
+### Diebold-Mariano: cuánto fiarse del p-valor
+
+El contraste mira si la diferencia de error con el ingenuo es real o ruido. Las
+previsiones a h días se solapan, así que la varianza se estima con h−1 retardos y
+pesos de Bartlett, más la corrección de Harvey, Leybourne y Newbold. Se comprobó por
+simulación con dos modelos iguales cuántas veces da p < 0,05 (debería ser un 5 %):
+5,7–7,7 % a 5 y 63 días, pero **12 % a 252 días**. Con 5 años de test solo hay unos 5
+periodos de un año independientes, y ningún contraste es fiable. A 252 días un
+p < 0,05 no basta para concluir nada.
+
+### Comparación con los repositorios de referencia
+
+Mismo enunciado, cuatro protocolos distintos. Cada uno usa su propia métrica y periodo
+de test, así que las cifras nuestras se recalcularon en sus mismas condiciones:
+
+| Horizonte | Álvaro (MAE, 2023+) | Rubén (RMSE, 2024+) | Alejandro (RMSE, 2023+) | Pablo (MAE, 2022+) | Nosotros, mismas condiciones |
+|---|---|---|---|---|---|
+| 5 días | −2,0 % | +0,1 % | −1,8 % | −0,5 % | −1,6 a −2,0 % (MAE 2023+) |
+| 63 días | −4,5 % | −9,4 % | −61 % | −9,4 % (RNN) | RNN −7,0 % (MAE 2022+) |
+| 252 días | −7,7 % | +6,7 % | −45 % | −19,8 % (RNN) | RNN −22 % (MAE 2022+); +8,5 % (MAE 2023+) |
+
+(Álvaro frente a su "ingenuo con futuros", el equivalente a nuestro ingenuo.)
+
+- Nadie bate al ingenuo de forma significativa. Con la misma red y periodo que Pablo
+  los números casi coinciden: el resultado es del problema, no de un fallo propio.
+- A 252 días el periodo de test pesa más que el modelo: nuestra RNN pasa de −22 % a
+  +8,5 % solo con empezar el test en 2023. Los únicos positivos de las referencias a
+  1 año también empiezan en 2023 o 2024.
+
+### Por qué no se usa el "ingenuo con futuros"
+
+Álvaro lo usa porque el spot del Brent de FRED/EIA se publica con unos 7 días de
+retraso: su ingenuo normal es el precio de hace una semana, fácil de batir, y el de
+futuros estima el de hoy. Aquí se supone que el spot de hoy se conoce, así que nuestro
+ingenuo ya es la versión difícil; usar futuros posteriores a t sería una fuga. Además,
+a 63 y 252 días harían falta contratos a 3 y 12 meses, que no hay gratis. En la app,
+el precio de "hoy" debería tomarse del futuro más cercano (BZ=F) por ese retraso.
+
+## Relación con los apuntes de la asignatura (06_RNN)
+
+| Decisión | Diapositiva |
+|---|---|
+| `nn.RNN` / `nn.LSTM` / `nn.GRU` con `batch_first`, último estado `out[:, -1]` y capa `Linear` | 7, 10, 17, 23 |
+| Entrada (lote, ventana, variables) | 8 |
+| Recorte de gradientes: cota de BPTT, producto de ‖W_hh‖·‖φ'‖ | 4 |
+| W_hh ortogonal (norma 1) | 4 y 16 (`recurrent_initializer`) |
+| Puerta de olvido a 1 | 16 (`unit_forget_bias`) |
+| Dropout entre capas y antes de la salida | 16, 17 |
+| L2 | 16 (`kernel_regularizer`, `recurrent_regularizer`) |
+| Rentabilidades para que tanh y sigmoides no se saturen | 3, 7 |
+| Número de parámetros | 6 |
+| Adam | 9, 10, 18 |
+| LSTM mejor en horizontes largos en validación (tabla comparativa) | 21 |
+
+Lo que no se usa, y por qué:
+
+- **`stateful=True`:** las ventanas se barajan, así que el estado no puede pasar de
+  una muestra a la siguiente.
+- **Pérdida en todos los pasos (`return_sequences=True`, L = Σ L_t):** las ventanas
+  se solapan casi del todo y daría poca información nueva.
+- **Transformers:** el enunciado pide RNN, LSTM y GRU.
+- **MSE como pérdida:** se cambia por Huber por los días extremos (sí se usa MSE para
+  elegir y comparar).
+
+La tabla de la diapositiva 21 se cumple en validación (la LSTM es la mejor a 63 y 252
+días) pero no en test, donde la LSTM es la que más sobreajusta: tiene más parámetros
+("puede sobreajustar en datasets pequeños", misma tabla).
+
+## Limitaciones
+
+- **La validación se consultó en cuatro experimentos**, así que su error es
+  optimista. Por eso la cifra que cuenta es la de test.
+- **Del bloque de mejoras solo se aisló un cambio** (las dos variables). Su efecto
+  conjunto está medido (v1 → v4), no el de cada uno por separado.
+- **A 252 días hay muy pocos datos independientes**: unos 18 años de train y 5 de
+  test. Ninguna conclusión a 1 año es estadísticamente sólida.
+- **Batir al ingenuo no es ganar dinero.** Para invertir habría que batir al precio
+  de los futuros, después de comisiones; con un acierto de dirección del 50 % no hay
+  estrategia posible.
