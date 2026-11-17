@@ -88,7 +88,7 @@ tu usuario en lugar de `TU_USUARIO`:
 1. Crear el Space:
 
    ```bash
-   hf repo create TU_USUARIO/prevision-brent --repo-type space --space_sdk static
+   hf repos create TU_USUARIO/prevision-brent --repo-type space --space-sdk static
    ```
 
 2. Crear un token de **escritura** en <https://huggingface.co/settings/tokens> y guardarlo en

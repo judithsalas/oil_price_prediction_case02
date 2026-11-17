@@ -2,7 +2,7 @@
 title: Previsión del Brent
 sdk: static
 app_file: index.html
-short_description: Previsión del Brent a 1 semana, 3 meses y 1 año con RNN, LSTM y GRU
+short_description: Previsión del Brent a 1 semana, 3 meses y 1 año
 ---
 
 Previsión del precio del Brent con redes recurrentes (RNN, LSTM y GRU), su rango del 80 %
