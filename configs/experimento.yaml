@@ -9,3 +9,28 @@ horizontes:            # días hábiles a predecir
 particion:             # fechas de corte (incluidas en su partición)
   fin_train: '2017-12-31'
   fin_val:   '2020-12-31'   # test: de 2021 a hoy (2022 y 2026 incluidos)
+
+# Validación cruzada walk-forward: train crece, validación son los 3 años
+# siguientes. Nunca toca test (2021+). El último pliegue es la partición final.
+walk_forward:
+  - {fin_train: '2011-12-31', fin_val: '2014-12-31'}
+  - {fin_train: '2014-12-31', fin_val: '2017-12-31'}
+  - {fin_train: '2017-12-31', fin_val: '2020-12-31'}
+
+# Rejilla de hiperparámetros: la misma para las tres redes (mismo presupuesto)
+rejilla:
+  oculto: [16, 32, 64]
+  capas: [1, 2]
+  dropout: [0.2]       # antes de la salida y, con 2 capas, también entre capas
+  lr: [0.001, 0.0001]  # con la baja, la mejor época llega más tarde
+
+# La parada temprana usa el último 15 % de train (ver preproceso.PARADA)
+entrenamiento:
+  epocas: 100
+  paciencia: 10
+  lote: 64
+  l2: 0.0001           # penalización L2 de los pesos (weight decay de Adam)
+
+# Cada semilla se ejecuta aparte (scripts/entrenar.py --semilla N). La combinación
+# ganadora se elige por la media de todas, no por una semilla con suerte.
+semillas: [0, 1, 2]
