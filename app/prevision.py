@@ -110,10 +110,43 @@ def historico(datos):
     return {'semanal': puntos(semanal), 'diario': puntos(diario)}
 
 
+def evaluacion_test():
+    """Cómo le fue en test (2021-2026) al modelo de la app de cada horizonte, con
+    los modelos del estudio: precio real, previsión, ingenuo y rango del 80 %
+    (uno de cada 3 días), y por año de origen el error frente al ingenuo y la
+    cobertura del rango. Sale de resultados ya guardados: no evalúa nada."""
+    pred = pd.read_csv(RESULTADOS / 'test_predicciones.csv', parse_dates=['dia', 'fecha_objetivo'])
+    por_anio = pd.read_csv(RESULTADOS / 'test_por_anio.csv')
+    intervalos = pd.read_csv(RESULTADOS / 'intervalos.csv').set_index(['horizonte', 'modelo'])
+    salida = {}
+    for nombre_h, fila in elegidos().items():
+        red = fila['modelo']
+        p = pred[pred['horizonte'] == nombre_h].sort_values('fecha_objetivo')
+        bajo, alto = intervalos.loc[(nombre_h, red), ['bajo', 'alto']]
+        prev = p[f'precio_{red}']
+        dentro = np.log(p['precio_real'] / prev).between(bajo, alto)
+        cobertura = dentro.groupby(p['dia'].dt.year).mean()
+        ratio = por_anio[(por_anio['horizonte'] == nombre_h) & (por_anio['modelo'] == red)]
+        serie = p.assign(bajo=prev * np.exp(bajo), alto=prev * np.exp(alto)).iloc[::3]
+        salida[nombre_h] = {
+            'red': red.upper(),
+            'serie': [[f.date().isoformat(), *(round(float(v), 2) for v in vals)] for f, *vals in zip(
+                serie['fecha_objetivo'], serie['precio_real'], serie[f'precio_{red}'],
+                serie['precio_ingenuo'], serie['bajo'], serie['alto'])],
+            'por_anio': [{'anio': int(a), 'error_vs_ingenuo': round(float(r), 3),
+                          'cobertura': round(float(cobertura.get(a, np.nan)), 3)}
+                         for a, r in zip(ratio['anio'], ratio['ratio'])],
+        }
+    return salida
+
+
 def resumen():
-    datos = leer_datos()
+    datos, cfg = leer_datos(), configuracion()
     return {'prevision': prevision(datos), 'historico': historico(datos),
-            'comparativa': json.loads(comparativa().to_json(orient='records'))}
+            'comparativa': json.loads(comparativa().to_json(orient='records')),
+            'test': evaluacion_test(),
+            'validacion': {'walk_forward': cfg['walk_forward'], 'particion': cfg['particion'],
+                           'inicio': datos.index[0].date().isoformat()}}
 
 
 def reentrenar(avisar=print):

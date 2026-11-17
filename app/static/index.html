@@ -26,6 +26,7 @@
       <a class="marca" href="#"><span class="gota" aria-hidden="true"></span>Previsión del Brent</a>
       <ul>
         <li><a href="#prevision">Previsión</a></li>
+        <li><a href="#acierta">¿Acierta?</a></li>
         <li><a href="#ciclo">Ciclo económico</a></li>
         <li><a href="#comparativa">Comparativa</a></li>
         <li><a href="#actualizar">Actualización</a></li>
@@ -88,6 +89,32 @@
       </div>
     </section>
 
+    <section id="acierta" class="tono" aria-labelledby="t-acierta">
+      <div class="contenedor">
+        <p class="antetitulo">¿Acierta?</p>
+        <h2 id="t-acierta">Cómo le fue con datos que no había visto</h2>
+        <p class="suave intro" id="a-intro"></p>
+        <div class="tarjeta grafico">
+          <div class="lienzo alto"><canvas id="g-test" role="img" aria-label="Precio real frente a la previsión en 2021–2026"></canvas></div>
+          <div class="leyenda" aria-hidden="true">
+            <span>Precio real</span><span class="l-prev">Previsión</span><span class="l-ingenuo">Precio de hoy (ingenuo)</span><span class="l-rango">Rango del 80 %</span>
+          </div>
+        </div>
+        <div class="dos">
+          <div class="tarjeta">
+            <h3>Error frente al precio de hoy, año a año</h3>
+            <p class="suave pequeno">Por debajo de 1, el modelo se equivocó menos que suponer que el precio no cambia.</p>
+            <div class="lienzo bajo"><canvas id="g-anio" role="img" aria-label="Error del modelo dividido por el del ingenuo, por año"></canvas></div>
+          </div>
+          <div class="tarjeta">
+            <h3>Veces que el precio cayó dentro del rango</h3>
+            <p class="suave pequeno">La línea marca el 80 % prometido: por debajo, el rango se quedó corto ese año.</p>
+            <div class="lienzo bajo"><canvas id="g-cobertura" role="img" aria-label="Cobertura del rango del 80 % por año"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="ciclo" class="oscura" aria-labelledby="t-ciclo">
       <figure class="banda">
         <img alt="Petrolero navegando junto a la costa"
@@ -126,6 +153,21 @@
         <p class="suave intro">El modelo de cada plazo se eligió por su error en validación (2012–2020), antes de mirar
           el test (2021–2026). La mejora es el error frente a suponer que el precio no cambia: en positivo, mejor que
           el precio de hoy.</p>
+        <div class="dos">
+          <div class="tarjeta">
+            <h3>Cómo se eligió cada modelo</h3>
+            <p class="suave pequeno">Validación walk-forward: se entrena con el pasado y se valida con los años siguientes, tres veces. El test se miró una sola vez, al final.</p>
+            <div class="esquema" id="esquema"></div>
+            <div class="leyenda" aria-hidden="true">
+              <span class="l-ajuste">Ajusta los pesos</span><span class="l-parada">Parada temprana</span><span class="l-valida">Validación</span><span class="l-test">Test</span>
+            </div>
+          </div>
+          <div class="tarjeta">
+            <h3>¿Se cumplió lo que anticipaba la validación?</h3>
+            <p class="suave pequeno">Mejora frente al precio de hoy. Círculo hueco: validación 2012–2020. Lleno: test 2021–2026. ★ modelo de la app.</p>
+            <div class="pesas" id="pesas"></div>
+          </div>
+        </div>
         <div class="tarjeta tabla-envoltura" tabindex="0" role="region" aria-label="Tabla comparativa">
           <table id="tabla"></table>
         </div>

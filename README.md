@@ -73,7 +73,11 @@ poetry run python -m unittest
 - Elegir horizonte y ver el precio previsto, la variación sobre el último precio y el rango del 80 %.
 - Un texto para no técnicos: qué dice la previsión, cuánto fiarse (según el test) y qué puede invalidarla.
 - El histórico desde 2000 con los picos y caídas del ciclo económico explicados.
-- La comparativa de las tres redes.
+- **¿Acierta?**: el modelo de cada plazo en test (2021–2026) frente al precio real, con su rango
+  del 80 %, y año a año su error frente al precio de hoy y las veces que el precio cayó dentro
+  del rango.
+- La comparativa de las tres redes, con el esquema de la validación walk-forward y lo que
+  anticipaba la validación frente a lo que pasó en test.
 
 Funciona de dos formas con la misma página ([`app/static/`](app/static)):
 

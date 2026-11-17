@@ -100,6 +100,7 @@ function elegir(i) {
   $('x-fiar').textContent = t.fiar;
   $('x-riesgos').textContent = t.riesgos;
   graficoPrevision(p);
+  graficoTest(p);
 }
 
 function ejes(minX, maxX, formato, oscuro = false) {
@@ -173,6 +174,118 @@ function graficoCiclo() {
   });
 }
 
+// ---- ¿Acierta? El modelo de la app en test (2021-2026), del plazo elegido ----
+function graficoTest(p) {
+  const t = datos.test?.[p.horizonte];
+  if (!t) return;
+  const punto = (k) => t.serie.map((f) => ({ x: ms(f[0]), y: f[k] }));
+  $('a-intro').textContent = `Modelo ${t.red} a ${p.nombre}, probado en 2021–2026 con datos que no vio al entrenarse ` +
+    '(modelos del estudio). Cambia de plazo arriba para ver los otros dos.';
+  graficos.test?.destroy();
+  graficos.test = new Chart($('g-test'), {
+    type: 'line',
+    data: { datasets: [
+      { label: 'Rango bajo', data: punto(4), borderWidth: 0, pointRadius: 0, fill: '+1', backgroundColor: color('--incertidumbre-fondo') },
+      { label: 'Rango alto', data: punto(5), borderWidth: 0, pointRadius: 0 },
+      { label: 'Precio de hoy (ingenuo)', data: punto(3), borderColor: color('--texto-suave'), borderWidth: 1, borderDash: [4, 3], pointRadius: 0 },
+      { label: 'Previsión', data: punto(2), borderColor: color('--primario'), borderWidth: 1.5, pointRadius: 0 },
+      { label: 'Precio real', data: punto(1), borderColor: color('--serie'), borderWidth: 1.75, pointRadius: 0 },
+    ] },
+    options: base(ejes(ms(t.serie[0][0]), ms(t.serie.at(-1)[0]), { year: 'numeric' })),
+  });
+  const anios = t.por_anio.map((a) => String(a.anio));
+  const barras = (id, valores, linea, formato, etiqueta) => {
+    graficos[id]?.destroy();
+    graficos[id] = new Chart($(id), {
+      type: 'bar',
+      data: { labels: anios, datasets: [{ label: etiqueta, data: valores, backgroundColor: color('--primario'), borderRadius: 4 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        scales: {
+          x: { grid: { display: false }, ticks: { color: color('--texto-suave') } },
+          y: { beginAtZero: true, grid: { color: color('--borde') }, border: { display: false },
+               ticks: { color: color('--texto-suave'), callback: formato } },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (it) => `${etiqueta}: ${formato(it.parsed.y)}` } },
+          annotation: { annotations: { ref: { type: 'line', yMin: linea, yMax: linea, borderColor: color('--texto'), borderWidth: 1.5, borderDash: [5, 4] } } },
+        },
+      },
+    });
+  };
+  barras('g-anio', t.por_anio.map((a) => a.error_vs_ingenuo), 1, (v) => numero(v, 1), 'Error / ingenuo');
+  barras('g-cobertura', t.por_anio.map((a) => a.cobertura * 100), 80, (v) => `${numero(v, 0)} %`, 'Dentro del rango');
+}
+
+// ---- Comparativa: esquema walk-forward y validación frente a test ----
+function esquema() {
+  const v = datos.validacion;
+  const ini = ms(v.inicio), fin = ms(datos.prevision[0].fecha_hoy);
+  const pct = (iso) => ((ms(iso) - ini) / (fin - ini)) * 100;
+  const PARADA = 0.15;    // último 15 % de train (petroleo/preproceso.py)
+  const filas = [...v.walk_forward.map((p, i) => ({ nombre: `Pliegue ${i + 1}`, ...p })),
+                 { nombre: 'Modelo final', ...v.particion, test: true }];
+  $('esquema').innerHTML = '';
+  for (const f of filas) {
+    const a = pct(f.fin_train), b = pct(f.fin_val), corte = a * (1 - PARADA);
+    const tramos = [['t-ajuste', 0, corte], ['t-parada', corte, a], ['t-valida', a, b], ...(f.test ? [['t-test', b, 100]] : [])];
+    const fila = document.createElement('div');
+    fila.className = 'esquema-fila';
+    fila.innerHTML = `<span></span><div class="esquema-barra" role="img"></div>`;
+    fila.firstChild.textContent = f.nombre;
+    fila.lastChild.setAttribute('aria-label', `Entrena hasta ${f.fin_train.slice(0, 4)}, valida hasta ${f.fin_val.slice(0, 4)}` +
+      (f.test ? ' y se prueba una vez en 2021–2026' : ''));
+    for (const [cls, x0, x1] of tramos) {
+      const s = document.createElement('span');
+      s.className = cls;
+      s.style.left = `${x0}%`;
+      s.style.width = `${x1 - x0}%`;
+      fila.lastChild.append(s);
+    }
+    $('esquema').append(fila);
+  }
+  const ejesTxt = document.createElement('div');
+  ejesTxt.className = 'esquema-ejes';
+  ejesTxt.innerHTML = `<span>${v.inicio.slice(0, 4)}</span><span>${datos.prevision[0].fecha_hoy.slice(0, 4)}</span>`;
+  $('esquema').append(ejesTxt);
+}
+
+function pesas() {
+  const nombres = { corto: '1 semana', medio: '3 meses', largo: '1 año' };
+  const redes = { rnn: 'RNN', lstm: 'LSTM', gru: 'GRU' };
+  const colores = { rnn: '#2A78D6', lstm: color('--primario'), gru: '#1BAF7A' };
+  const filas = datos.comparativa.filter((f) => redes[f.modelo]);
+  const vals = filas.flatMap((f) => [f.mejora_val, f['mejora_test_%']]);
+  const min = Math.floor(Math.min(...vals, 0) / 10) * 10, max = Math.ceil(Math.max(...vals, 0) / 10) * 10;
+  const x = (v) => ((v - min) / (max - min)) * 100;
+  $('pesas').innerHTML = '';
+  let anterior = null;
+  for (const f of filas) {
+    const val = f.mejora_val, test = f['mejora_test_%'];
+    const fila = document.createElement('div');
+    fila.className = `pesa${anterior && anterior !== f.horizonte ? ' grupo' : ''}${f.elegido_app ? ' app' : ''}`;
+    fila.style.setProperty('--color', colores[f.modelo]);
+    fila.innerHTML = `<span></span><div class="pesa-pista" role="img"><span class="pesa-cero"></span><span class="pesa-linea"></span>` +
+      `<span class="pesa-punto"></span><span class="pesa-punto lleno"></span></div><span class="pesa-num"></span>`;
+    fila.children[0].textContent = `${nombres[f.horizonte]} · ${redes[f.modelo]}${f.elegido_app ? ' ★' : ''}`;
+    const pista = fila.children[1];
+    pista.setAttribute('aria-label', `Validación ${conSigno(val)} %, test ${conSigno(test)} %`);
+    pista.children[0].style.left = `${x(0)}%`;
+    pista.children[1].style.left = `${Math.min(x(val), x(test))}%`;
+    pista.children[1].style.width = `${Math.abs(x(val) - x(test))}%`;
+    pista.children[2].style.left = `${x(val)}%`;
+    pista.children[3].style.left = `${x(test)}%`;
+    fila.children[2].textContent = `${conSigno(val)} → ${conSigno(test)} %`;
+    $('pesas').append(fila);
+    anterior = f.horizonte;
+  }
+  const eje = document.createElement('div');
+  eje.className = 'pesas-eje';
+  eje.innerHTML = `<span></span><div><span>${min} %</span><span>+${max} %</span></div><span></span>`;
+  $('pesas').append(eje);
+}
+
 function eventos() {
   $('eventos').innerHTML = '';
   for (const e of EVENTOS) {
@@ -232,6 +345,8 @@ async function cargar() {
   pintar();
   eventos();
   tabla();
+  esquema();
+  pesas();
 }
 
 async function tarea(ruta, boton) {
