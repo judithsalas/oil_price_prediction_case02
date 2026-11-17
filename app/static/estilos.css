@@ -144,7 +144,6 @@ section { padding: var(--e-9) 0; }
 .eventos .fecha { font-size: var(--t-pequeno); color: var(--sobre-noche-suave); font-variant-numeric: tabular-nums; }
 .eventos h3 { font-size: 1.0625rem; font-family: var(--f-texto); font-weight: 700; margin: var(--e-1) 0; }
 .eventos p { color: var(--sobre-noche-suave); }
-.eventos .pendiente { color: var(--primario); border: 1px dashed currentColor; padding: var(--e-1) var(--e-2); border-radius: var(--r-1); }
 
 /* Comparativa */
 .intro { margin-bottom: var(--e-5); }

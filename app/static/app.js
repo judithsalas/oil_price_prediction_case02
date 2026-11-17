@@ -14,8 +14,8 @@ const EVENTOS = [
     texto: 'La invasión rusa y las sanciones a uno de los mayores exportadores dispararon el miedo a la escasez, justo cuando la demanda se recuperaba. Después bajó con las subidas de tipos y el temor a una recesión.' },
   { fecha: '2025-12-16', precio: 60, titulo: 'Bajada gradual 2023–2025',
     texto: 'Demanda china más débil, producción récord fuera de la OPEP+ (EE. UU., Brasil, Guyana) y, en 2025, la OPEP+ deshaciendo parte de sus recortes.' },
-  { fecha: '2026-04-07', precio: 138, titulo: 'Pico de 2026', pendiente: true,
-    texto: '[PENDIENTE: causa del pico de 2026]' },
+  { fecha: '2026-04-07', precio: 138, titulo: 'Guerra de Irán y cierre de Ormuz',
+    texto: 'La guerra entre EE. UU. e Irán dejó prácticamente cerrado desde el 4 de marzo el estrecho de Ormuz, por donde pasa cerca de una quinta parte del petróleo y el gas del mundo. Qatar declaró fuerza mayor en sus exportaciones y el Brent pasó de unos 70 $ a más de 130 $ en un mes. Siguió muy volátil mientras se estancaban las negociaciones.' },
 ];
 
 const RIESGOS = {
@@ -182,7 +182,6 @@ function eventos() {
     li.querySelector('h3').textContent = e.titulo;
     const p = li.querySelector('p');
     p.textContent = e.texto;
-    if (e.pendiente) p.className = 'pendiente';
     $('eventos').append(li);
   }
 }
