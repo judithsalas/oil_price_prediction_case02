@@ -11,6 +11,7 @@ matplotlib.use('Agg')                       # solo guarda ficheros, no abre vent
 import matplotlib.pyplot as plt             # noqa: E402
 from matplotlib.lines import Line2D         # noqa: E402
 from matplotlib.ticker import MaxNLocator   # noqa: E402
+import numpy as np                          # noqa: E402
 import pandas as pd                         # noqa: E402
 
 COLORES = {'rnn': '#2a78d6', 'lstm': '#eb6834', 'gru': '#1baf7a'}
@@ -172,6 +173,126 @@ def test_series(series, titulo, ruta):
         ax.set_ylabel('$ por barril')
     ejes[0, 0].legend(loc='upper center', ncol=5, frameon=False, bbox_to_anchor=(0.5, 1.35))
     fig.suptitle(titulo, y=1.03, fontsize=12)
+    fig.tight_layout()
+    fig.savefig(ruta, dpi=130, bbox_inches='tight')
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------
+# Figuras de resumen (README y presentación): scripts/figuras.py
+# ---------------------------------------------------------------
+TRAMOS = {'train': ('#e9e8e4', 'entrenamiento'), 'val': ('#dde8f6', 'validación'),
+          'test': ('#fbe3d5', 'test')}
+
+
+def historia(brent, fin_train, fin_val, picos, titulo, ruta):
+    """Precio diario con los tramos de train, validación y test, y los picos
+    del ciclo numerados como en la app."""
+    fin_train, fin_val = pd.Timestamp(fin_train), pd.Timestamp(fin_val)
+    fig, ax = plt.subplots(figsize=(10, 3.6))
+    limites = [brent.index[0], fin_train, fin_val, brent.index[-1]]
+    for (color, nombre), a, b in zip(TRAMOS.values(), limites, limites[1:]):
+        ax.axvspan(a, b, color=color, zorder=0, lw=0)
+        desde = a.year if a == limites[0] else (a + pd.Timedelta(days=1)).year   # los cortes son el 31/12
+        ax.text(a + (b - a) / 2, 1.01, f'{nombre}\n{desde}–{b.year}', transform=ax.get_xaxis_transform(),
+                ha='center', va='bottom', fontsize=9, color=TEXTO_2)
+    ax.plot(brent.index, brent, color=TEXTO, lw=0.9, zorder=2)
+    for i, dia in enumerate(picos, 1):
+        d = brent.index[brent.index.get_indexer([pd.Timestamp(dia)], method='nearest')[0]]
+        ax.scatter(d, brent[d], s=150, color=COLORES['lstm'], edgecolor=FONDO, zorder=3)
+        ax.text(d, brent[d], str(i), ha='center', va='center', fontsize=7.5, color='white',
+                fontweight='bold', zorder=4)
+    ax.set_ylabel('$ por barril')
+    ax.set_xlim(limites[0], limites[-1])
+    ax.set_ylim(0, brent.max() * 1.12)
+    fig.suptitle(titulo, y=1.08, fontsize=12)
+    fig.savefig(ruta, dpi=130, bbox_inches='tight')
+    plt.close(fig)
+
+
+def esquema_walk_forward(inicio, fin, pliegues, parada, titulo, ruta):
+    """Una barra por pliegue: ajuste de pesos, parada temprana (último tramo de
+    train) y validación. El último pliegue es el modelo final, que además se
+    evalúa una sola vez en test."""
+    inicio, fin = pd.Timestamp(inicio), pd.Timestamp(fin)
+    colores = {'ajusta los pesos': '#8b93a1', 'parada temprana': '#cfd4dc',
+               'validación (elige la combinación)': TEXTO, 'test, una sola vez': COLORES['lstm']}
+    fig, ax = plt.subplots(figsize=(10, 2.6))
+    filas = [f'Pliegue {i}' for i in range(1, len(pliegues) + 1)] + ['Modelo final']
+    for y, (nombre, p) in enumerate(zip(filas, [*pliegues, pliegues[-1]])):
+        a, b = pd.Timestamp(p['fin_train']), pd.Timestamp(p['fin_val'])
+        corte = inicio + (a - inicio) * (1 - parada)
+        tramos = [(inicio, corte), (corte, a), (a, b)] + ([(b, fin)] if nombre == 'Modelo final' else [])
+        for (desde, hasta), color in zip(tramos, colores.values()):
+            ax.barh(y, hasta - desde, left=desde, height=0.55, color=color, zorder=2)
+    ax.set_yticks(range(len(filas)), filas)
+    ax.invert_yaxis()
+    ax.grid(axis='y', visible=False)
+    ax.grid(axis='x', color=REJILLA)
+    ax.spines['left'].set_visible(False)
+    ax.tick_params(axis='y', length=0)
+    marcas = [plt.Rectangle((0, 0), 1, 1, color=c, label=n) for n, c in colores.items()]
+    ax.legend(handles=marcas, loc='upper center', ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.14))
+    fig.suptitle(titulo, y=1.0, fontsize=12)
+    fig.savefig(ruta, dpi=130, bbox_inches='tight')
+    plt.close(fig)
+
+
+def validacion_vs_test(tabla, titulo, ruta):
+    """Mejora frente al ingenuo de cada red en validación (círculo hueco) y en
+    test (círculo lleno). Tabla: horizonte, modelo, mejora_val, mejora_test_%,
+    elegido_app."""
+    nombres_h = {'corto': '1 semana', 'medio': '3 meses', 'largo': '1 año'}
+    filas = tabla[tabla['modelo'].isin(COLORES)].reset_index(drop=True)
+    fig, ax = plt.subplots(figsize=(9, 0.42 * len(filas) + 1.2))
+    for y, f in filas.iterrows():
+        val, test, color = f['mejora_val'], f['mejora_test_%'], COLORES[f['modelo']]
+        ax.plot([val, test], [y, y], color=REJILLA, lw=3, zorder=1, solid_capstyle='round')
+        ax.scatter(val, y, s=60, facecolor=FONDO, edgecolor=color, lw=2, zorder=3)
+        ax.scatter(test, y, s=60, color=color, zorder=3)
+        ax.text(1.01, y, f'{val:+.1f} %  →  {test:+.1f} %', transform=ax.get_yaxis_transform(),
+                va='center', fontsize=9, color=TEXTO if f['elegido_app'] == True else TEXTO_2,
+                fontweight='bold' if f['elegido_app'] == True else 'normal')
+    etiquetas = [f"{nombres_h[f['horizonte']]} · {NOMBRES[f['modelo']]}" + (' ★' if f['elegido_app'] == True else '')
+                 for _, f in filas.iterrows()]
+    ax.set_yticks(range(len(filas)), etiquetas)
+    for y in range(3, len(filas), 3):
+        ax.axhline(y - 0.5, color=REJILLA, lw=1)
+    ax.invert_yaxis()
+    ax.axvline(0, color=TEXTO_2, lw=1)
+    ax.grid(axis='y', visible=False)
+    ax.grid(axis='x', color=REJILLA)
+    ax.tick_params(axis='y', length=0)
+    ax.set_xlabel('mejora frente al ingenuo (%): a la derecha de 0, mejor que el precio de hoy')
+    marcas = [Line2D([], [], marker='o', ls='', markerfacecolor=FONDO, markeredgecolor=TEXTO_2, mew=2,
+                     label='validación walk-forward (2012–2020)'),
+              Line2D([], [], marker='o', ls='', color=TEXTO_2, label='test (2021–2026)'),
+              Line2D([], [], ls='', label='★ modelo de la app')]
+    ax.legend(handles=marcas, loc='upper center', ncol=3, frameon=False, bbox_to_anchor=(0.5, 1.12))
+    fig.suptitle(titulo, y=1.04, fontsize=12)
+    fig.savefig(ruta, dpi=130, bbox_inches='tight')
+    plt.close(fig)
+
+
+def test_elegido(series, elegidos, titulo, ruta):
+    """Modelo de la app en test: precio real, previsión, ingenuo y rango del 80 %.
+    elegidos: {horizonte: (red, bajo, alto, cobertura)}; bajo/alto en log-rentabilidad."""
+    nombres_h = {'corto': '1 semana', 'medio': '3 meses', 'largo': '1 año'}
+    fig, ejes = plt.subplots(len(elegidos), 1, figsize=(10, 2.9 * len(elegidos)), squeeze=False, sharex=True)
+    for ax, (h, (red, bajo, alto, cobertura)) in zip(ejes[:, 0], elegidos.items()):
+        sub = series[series['horizonte'] == h].sort_values('fecha_objetivo')
+        x, prev = pd.to_datetime(sub['fecha_objetivo']), sub[f'precio_{red}']
+        ax.fill_between(x, prev * np.exp(bajo), prev * np.exp(alto), color=COLORES[red], alpha=0.18,
+                        lw=0, label='rango del 80 %')
+        ax.plot(x, sub['precio_real'], color=TEXTO, lw=1.4, label='precio real', zorder=3)
+        ax.plot(x, sub['precio_ingenuo'], color=REFERENCIAS['ingenuo'], lw=1, ls='--', label='ingenuo')
+        ax.plot(x, prev, color=COLORES[red], lw=1.3, label=f'previsión ({NOMBRES[red]})')
+        ax.set_title(f'{nombres_h[h]} · {NOMBRES[red]} · el precio real cae dentro del rango '
+                     f'el {cobertura * 100:.0f} % de las veces', loc='left', fontweight='bold')
+        ax.set_ylabel('$ por barril')
+        ax.legend(loc='upper left', ncol=4, frameon=False, fontsize=8.5)
+    ejes[-1, 0].set_xlabel('fecha que se predice')
+    fig.suptitle(titulo, y=1.01, fontsize=12)
     fig.tight_layout()
     fig.savefig(ruta, dpi=130, bbox_inches='tight')
     plt.close(fig)

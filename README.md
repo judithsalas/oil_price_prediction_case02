@@ -26,6 +26,16 @@ la app aporta es el rango de incertidumbre y saber cuánto fiarse en cada horizo
 completa (MAE, RMSE, parámetros y tiempo de las tres redes) está en
 [`docs/resultados/comparativa.csv`](docs/resultados/comparativa.csv) y en la propia app.
 
+![Mejora frente al ingenuo de cada red en validación y en test](docs/figuras/validacion_vs_test.png)
+
+![Modelo de la app en test con su rango del 80 %](docs/figuras/test_elegido.png)
+
+Cómo se repartieron los datos y cómo se validó:
+
+![Precio del Brent con los tramos de entrenamiento, validación y test](docs/figuras/historia.png)
+
+![Esquema de la validación walk-forward](docs/figuras/walk_forward.png)
+
 ## Instalación
 
 Python 3.12 y [Poetry](https://python-poetry.org):
@@ -46,6 +56,7 @@ el paso 6. Los pasos 1 a 5 rehacen el estudio desde cero.
 | 3 | `poetry run python scripts/entrenar.py --final` | Elige cada red por validación y la reentrena con 3 semillas en `models/final/` | ~4 min |
 | 4 | `poetry run python scripts/evaluar.py` | Evaluación en test, **una sola vez**: Diebold-Mariano, Ridge y acierto de dirección | 1 min |
 | 5 | `poetry run python scripts/comparar.py` | Tabla comparativa, modelo de la app e intervalos del 80 % con su cobertura en test | segundos |
+| 5b | `poetry run python -m scripts.figuras` | Las 4 figuras de resumen (historia, walk-forward, validación frente a test y modelo de la app en test) | segundos |
 | 6 | `poetry run uvicorn app.servidor:app --port 7860` | La app en <http://localhost:7860> (ver [La app](#la-app)) | — |
 
 Tiempos medidos en un portátil con CPU. Los parámetros comunes (ventana de 60 días, fechas

@@ -228,6 +228,14 @@ Errores divididos por el del ingenuo: 1 = igual que el ingenuo, por debajo = mej
 
 - `test_por_anio.png`: error en test de cada modelo frente al ingenuo, año a año.
 - `test_series.png`: precio real del Brent y previsión de cada modelo en test.
+- Resumen (`scripts/figuras.py`, sin reentrenar ni volver a evaluar):
+  - `historia.png`: precio del Brent con los tramos de train, validación y test y los
+    picos del ciclo, numerados como en la app.
+  - `walk_forward.png`: esquema de los 3 pliegues (ajuste, parada temprana, validación)
+    y del modelo final con su único test.
+  - `validacion_vs_test.png`: mejora de cada red en validación y en test; muestra que lo
+    elegido en validación no se sostiene.
+  - `test_elegido.png`: el modelo de la app en test con su rango del 80 % y la cobertura.
 - `v1_niveles/`, `v2_completo/`, `v3_sin_variables/`: figuras de los experimentos
   anteriores (los CSV están en las mismas carpetas de `docs/resultados/`).
 
