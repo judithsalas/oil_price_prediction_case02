@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from petroleo.preproceso import preparar, quitar_outliers
+from petroleo.preproceso import preparar, quitar_outliers, ultima_ventana
 
 FIN_TRAIN, FIN_VAL = '2001-06-29', '2001-12-31'
 VENTANA, H = 10, 5
@@ -67,6 +67,18 @@ class TestPreparar(unittest.TestCase):
         X, _, _ = preparar(datos, VENTANA, H, FIN_TRAIN, FIN_VAL)[0]['test']
         X2, _, _ = preparar(caros, VENTANA, H, FIN_TRAIN, FIN_VAL)[0]['test']
         np.testing.assert_allclose(X, X2, atol=1e-4)
+
+
+class TestUltimaVentana(unittest.TestCase):
+    def test_es_la_misma_ventana_que_usa_el_entrenamiento(self):
+        # La última muestra de test con h = 1 acaba el penúltimo día: quitando el
+        # último día, la ventana de hoy debe ser exactamente esa.
+        datos = serie_falsa()
+        partes, esc = preparar(datos, VENTANA, 1, FIN_TRAIN, FIN_VAL)
+        X, dia, precio = ultima_ventana(datos.iloc[:-1], esc, VENTANA)
+        np.testing.assert_array_equal(X[0], partes['test'][0][-1])
+        self.assertEqual(dia, partes['test'][2][-1])
+        self.assertEqual(precio, datos['brent'].iloc[-2])
 
 
 class TestQuitarOutliers(unittest.TestCase):

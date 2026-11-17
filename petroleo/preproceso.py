@@ -90,3 +90,12 @@ def preparar(datos, ventana, horizonte, fin_train, fin_val):
     mascaras['train'] = mascaras['train'] & (objetivo < inicio)
     partes = {k: (X[m], y[m], dia[m]) for k, m in mascaras.items()}
     return partes, escalador
+
+
+def ultima_ventana(datos, escalador, ventana):
+    """Entrada de la previsión de hoy: la ventana (1, ventana, columnas) que acaba
+    en el último día con datos. Devuelve (X, ese día, precio del Brent ese día)."""
+    datos = seleccionar(quitar_outliers(datos))
+    x = entradas(datos).iloc[-ventana:]
+    X = np.clip(escalador.transform(x), -LIMITE, LIMITE).astype(np.float32)[None]
+    return X, x.index[-1], float(datos['brent'].iloc[-1])

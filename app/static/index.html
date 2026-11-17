@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Previsión del Brent</title>
+  <meta name="description" content="Previsión del precio del Brent a 1 semana, 3 meses y 1 año con redes recurrentes, su rango de incertidumbre y cuánto fiarse de ella.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <a class="saltar" href="#prevision">Saltar a la previsión</a>
+
+  <header class="nav">
+    <nav class="contenedor" aria-label="Principal">
+      <a class="marca" href="#">Previsión del Brent</a>
+      <ul>
+        <li><a href="#prevision">Previsión</a></li>
+        <li><a href="#ciclo">Ciclo económico</a></li>
+        <li><a href="#comparativa">Comparativa</a></li>
+        <li><a href="#actualizar">Actualizar</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <div class="contenedor cabecera">
+      <h1>¿Cuánto costará el barril de Brent?</h1>
+      <p>Previsión a una semana, tres meses y un año con redes neuronales recurrentes, con el rango
+        en el que suele caer el precio y una respuesta honesta sobre cuánto fiarse de ella.</p>
+      <div class="dato-hoy cifras" aria-live="polite">
+        <div><span class="suave pequeno">Último precio</span><b id="precio-hoy">—</b></div>
+        <div><span class="suave pequeno">Fecha del dato</span><b id="fecha-hoy">—</b></div>
+      </div>
+    </div>
+
+    <section id="prevision" aria-labelledby="t-prevision">
+      <div class="contenedor">
+        <h2 id="t-prevision">Previsión</h2>
+        <div class="pestanas" role="tablist" aria-label="Horizonte de la previsión" id="pestanas"></div>
+
+        <div class="prevision" id="panel-prevision" role="tabpanel" tabindex="0">
+          <div class="tarjeta panel">
+            <div>
+              <span class="suave pequeno" id="p-cuando">—</span>
+              <div class="cifra" id="p-previsto">—</div>
+              <span class="variacion cifras" id="p-variacion"></span>
+            </div>
+            <div>
+              <span class="suave pequeno">Rango del 80 %</span>
+              <div class="rango cifras" id="p-rango">—</div>
+            </div>
+            <span class="fiabilidad" id="p-fiabilidad"></span>
+            <p class="suave pequeno" id="p-modelo"></p>
+          </div>
+          <div class="tarjeta grafico">
+            <canvas id="g-prevision" role="img" aria-label="Precio del último año y previsión con su rango"></canvas>
+            <div class="leyenda" aria-hidden="true">
+              <span>Precio real</span><span class="l-prev">Previsión</span><span class="l-rango">Rango del 80 %</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="explicacion">
+          <div><h3>Qué dice</h3><p id="x-que"></p></div>
+          <div><h3>Cuánto fiarse</h3><p id="x-fiar"></p></div>
+          <div><h3>Qué puede invalidarla</h3><p id="x-riesgos"></p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="ciclo" aria-labelledby="t-ciclo">
+      <div class="contenedor">
+        <h2 id="t-ciclo">El Brent y el ciclo económico, 2000–hoy</h2>
+        <p class="suave">Cada número del gráfico es un pico o una caída explicada debajo. Las subidas
+          acompañan a las fases de crecimiento mundial y los desplomes, a las crisis y a los excesos de oferta.</p>
+        <div class="tarjeta ciclo-grafico">
+          <canvas id="g-ciclo" role="img" aria-label="Precio semanal del Brent desde 2000 con los principales picos y caídas numerados"></canvas>
+        </div>
+        <ol class="eventos" id="eventos"></ol>
+      </div>
+    </section>
+
+    <section id="comparativa" aria-labelledby="t-comparativa">
+      <div class="contenedor">
+        <h2 id="t-comparativa">RNN, LSTM y GRU: cuál se usa y por qué</h2>
+        <p class="suave">Las tres redes se entrenaron con los mismos datos, la misma ventana de 60 días y la misma
+          búsqueda de hiperparámetros. El modelo de cada horizonte se eligió por su error en validación (2012–2020),
+          antes de mirar el test (2021–2026). La mejora es el error frente a suponer que el precio no cambia:
+          en positivo, mejor que el precio de hoy.</p>
+        <div class="tabla-envoltura" tabindex="0" role="region" aria-label="Tabla comparativa">
+          <table id="tabla"></table>
+        </div>
+        <ul class="conclusiones">
+          <li><b>1 semana:</b> ninguna red se separa del precio de hoy. Lo que aporta valor es el rango.</li>
+          <li><b>3 meses:</b> la LSTM era la mejor en validación (+12,9 %), pero en 2021–2026 no se sostiene.
+            RNN y GRU empatan con el precio de hoy.</li>
+          <li><b>1 año:</b> ninguna red mejora al precio de hoy en test. A este plazo deciden hechos que hoy no se conocen.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="actualizar" aria-labelledby="t-actualizar">
+      <div class="contenedor">
+        <h2 id="t-actualizar">Mantenerla al día</h2>
+        <p class="suave">Descarga los últimos precios de FRED (EIA) y Yahoo Finance y recalcula la previsión. El
+          reentrenamiento vuelve a ajustar los tres modelos elegidos con todos los datos hasta hoy; tarda unos minutos.</p>
+        <div class="acciones">
+          <button class="boton" id="b-actualizar" type="button">Descargar datos nuevos</button>
+          <button class="boton secundario" id="b-reentrenar" type="button">Reentrenar los modelos</button>
+        </div>
+        <p class="estado pequeno" id="estado" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="contenedor">
+      <p>Datos: Brent y WTI de la EIA, tipos de cambio, tipo del BCE y VIX vía FRED; futuros, cobre, oro e índice
+        del dólar de Yahoo Finance. Modelos RNN, LSTM y GRU en PyTorch.</p>
+      <p>Herramienta educativa de apoyo a decisiones. No es asesoramiento financiero.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
