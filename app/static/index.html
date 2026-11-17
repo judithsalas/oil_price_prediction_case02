@@ -105,9 +105,12 @@
     <section id="actualizar" aria-labelledby="t-actualizar">
       <div class="contenedor">
         <h2 id="t-actualizar">Mantenerla al día</h2>
-        <p class="suave">Descarga los últimos precios de FRED (EIA) y Yahoo Finance y recalcula la previsión. El
+        <p class="suave" id="modo-servidor">Descarga los últimos precios de FRED (EIA) y Yahoo Finance y recalcula la previsión. El
           reentrenamiento vuelve a ajustar los tres modelos elegidos con todos los datos hasta hoy; tarda unos minutos.</p>
-        <div class="acciones">
+        <p class="suave" id="modo-estatico" hidden>Esta página se actualiza sola cada día laborable: descarga los últimos
+          precios de FRED (EIA) y Yahoo Finance y recalcula la previsión. El día 1 de cada mes, además, reentrena los tres
+          modelos elegidos con todos los datos hasta ese día. Última actualización: <b id="generado">—</b>.</p>
+        <div class="acciones" id="acciones">
           <button class="boton" id="b-actualizar" type="button">Descargar datos nuevos</button>
           <button class="boton secundario" id="b-reentrenar" type="button">Reentrenar los modelos</button>
         </div>

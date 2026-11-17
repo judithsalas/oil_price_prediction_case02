@@ -1,4 +1,4 @@
-# Dependencias del Space de Hugging Face (torch se instala aparte, versión CPU: ver Dockerfile)
+# Dependencias de la app y de GitHub Actions (torch se instala aparte, versión CPU: ver .github/workflows/web.yml)
 fastapi==0.163.1
 uvicorn==0.54.0
 matplotlib==3.11.2

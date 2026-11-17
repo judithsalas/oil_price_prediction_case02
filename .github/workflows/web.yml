@@ -1,0 +1,59 @@
+# Mantiene al día la web estática del Space de Hugging Face.
+# - Cada día laborable: descarga datos, recalcula la previsión y sube la web.
+# - El día 1 de cada mes (o a mano, marcando "reentrenar"): además reentrena.
+# Los modelos reentrenados se guardan en el propio Space (models/app/) y se
+# recuperan en cada ejecución. Necesita el secreto HF_TOKEN (token de escritura).
+name: Web del Space
+
+on:
+  schedule:
+    - cron: '0 7 * * 1-5'     # días laborables, 07:00 UTC
+    - cron: '0 8 1 * *'       # día 1 de cada mes: reentrenar
+  workflow_dispatch:
+    inputs:
+      reentrenar:
+        description: 'Reentrenar los modelos antes de calcular'
+        type: boolean
+        default: false
+
+env:
+  SPACE: judithsalas/prevision-brent
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency: web          # nunca dos ejecuciones a la vez
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Dependencias
+        run: |
+          pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install -r app/requirements.txt huggingface_hub
+
+      - name: Recuperar los modelos reentrenados del Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: hf download "$SPACE" --repo-type space --include "models/app/*" --local-dir . || true
+
+      - name: Generar la web
+        run: |
+          if [ "${{ github.event.schedule }}" = '0 8 1 * *' ] || [ "${{ inputs.reentrenar }}" = 'true' ]; then
+            python -m scripts.exportar_web --reentrenar
+          else
+            python -m scripts.exportar_web
+          fi
+
+      - name: Subir al Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          hf upload "$SPACE" web . --repo-type space --commit-message "Previsión del $(date -u +%F)"
+          if [ -d models/app ]; then
+            hf upload "$SPACE" models/app models/app --repo-type space --commit-message "Modelos reentrenados"
+          fi

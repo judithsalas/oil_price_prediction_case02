@@ -238,3 +238,6 @@ docs/resultados/**/log_*.txt
 
 # Modelos reentrenados desde la app
 models/app/
+
+# Web estática generada por scripts/exportar_web.py
+web/

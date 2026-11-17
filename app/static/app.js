@@ -212,9 +212,16 @@ function pintar() {
 }
 
 async function cargar() {
-  const r = await fetch('api/resumen');
+  // Con servidor (en local) se pide la API; en el Space estático, datos.json,
+  // que genera GitHub Actions cada día (scripts/exportar_web.py)
+  let r = await fetch('api/resumen').catch(() => null);
+  const estatico = !r?.ok;
+  if (estatico) r = await fetch('datos.json');
   if (!r.ok) throw new Error(`El servidor respondió ${r.status}`);
   datos = await r.json();
+  $('modo-servidor').hidden = $('acciones').hidden = estatico;
+  $('modo-estatico').hidden = !estatico;
+  if (estatico) $('generado').textContent = new Date(datos.generado).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
   pintar();
   eventos();
   tabla();
