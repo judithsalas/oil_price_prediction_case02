@@ -61,19 +61,23 @@ function pestanas() {
     b.type = 'button';
     b.role = 'tab';
     b.id = `pestana-${p.horizonte}`;
-    b.textContent = p.nombre[0].toUpperCase() + p.nombre.slice(1);
+    b.innerHTML = '<span class="h-nombre"></span><span class="h-precio"></span><span class="h-var"></span><span class="h-rango"></span>';
+    b.querySelector('.h-nombre').textContent = `A ${p.nombre}`;
+    b.querySelector('.h-precio').textContent = dolar.format(p.previsto);
+    b.querySelector('.h-var').textContent = `${conSigno(p.variacion)} %`;
+    b.querySelector('.h-rango').textContent = `rango ${numero(p.bajo, 0)}–${numero(p.alto, 0)} $`;
     b.setAttribute('aria-controls', 'panel-prevision');
     b.addEventListener('click', () => elegir(i));
     lista.append(b);
   });
   // Flechas para moverse entre pestañas (patrón ARIA de pestañas)
-  lista.addEventListener('keydown', (e) => {
+  lista.onkeydown = (e) => {
     const paso = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
     if (!paso) return;
     const n = datos.prevision.length;
     elegir((actual + paso + n) % n);
     lista.children[actual].focus();
-  });
+  };
 }
 
 function elegir(i) {
@@ -98,11 +102,12 @@ function elegir(i) {
   graficoPrevision(p);
 }
 
-function ejes(minX, maxX, formato) {
-  const rejilla = { color: color('--borde') };
-  const ticks = { color: color('--texto-suave'), font: { family: 'Public Sans', size: 12 } };
+function ejes(minX, maxX, formato, oscuro = false) {
+  const borde = color(oscuro ? '--noche-borde' : '--borde');
+  const rejilla = { color: borde };
+  const ticks = { color: color(oscuro ? '--sobre-noche-suave' : '--texto-suave'), font: { family: 'Public Sans', size: 12 } };
   return {
-    x: { type: 'linear', min: minX, max: maxX, grid: { display: false }, border: { color: color('--borde') },
+    x: { type: 'linear', min: minX, max: maxX, grid: { display: false }, border: { color: borde },
          ticks: { ...ticks, maxTicksLimit: 7, callback: (v) => new Date(v).toLocaleDateString('es-ES', formato) } },
     y: { grid: rejilla, border: { display: false }, ticks: { ...ticks, callback: (v) => `${v} $` } },
   };
@@ -126,10 +131,12 @@ function base(escalas, extra = {}) {
 
 function graficoPrevision(p) {
   const hoy = ms(p.fecha_hoy), fin = ms(p.fecha_objetivo);
-  const real = datos.historico.diario.map(([d, v]) => ({ x: ms(d), y: v }));
+  // A 1 semana bastan 3 meses de historia; si no, la previsión queda como un punto en el borde
+  const desdeHist = p.dias <= 5 ? hoy - 90 * 864e5 : 0;
+  const real = datos.historico.diario.map(([d, v]) => ({ x: ms(d), y: v })).filter((q) => q.x >= desdeHist);
   const desde = { x: hoy, y: p.precio_hoy };
   const conjuntos = [
-    { label: 'Precio real', data: real, borderColor: color('--texto'), borderWidth: 1.5, pointRadius: 0 },
+    { label: 'Precio real', data: real, borderColor: color('--serie'), borderWidth: 1.75, pointRadius: 0 },
     { label: 'Rango bajo', data: [desde, { x: fin, y: p.bajo }], borderColor: color('--incertidumbre'), borderWidth: 1,
       pointRadius: 0, fill: '+1', backgroundColor: color('--incertidumbre-fondo') },
     { label: 'Rango alto', data: [desde, { x: fin, y: p.alto }], borderColor: color('--incertidumbre'), borderWidth: 1, pointRadius: 0 },
@@ -142,7 +149,7 @@ function graficoPrevision(p) {
     options: base(ejes(real[0].x, fin + (fin - hoy) * 0.04, { month: 'short', year: '2-digit' })),
   });
   $('g-prevision').setAttribute('aria-label',
-    `Precio del Brent del último año, de ${dolar.format(real[0].y)} a ${dolar.format(p.precio_hoy)}, y previsión a ${p.nombre} ` +
+    `Precio reciente del Brent, de ${dolar.format(real[0].y)} a ${dolar.format(p.precio_hoy)}, y previsión a ${p.nombre} ` +
     `de ${dolar.format(p.previsto)} con rango entre ${dolar.format(p.bajo)} y ${dolar.format(p.alto)}.`);
 }
 
@@ -150,17 +157,18 @@ function graficoCiclo() {
   const serie = datos.historico.semanal.map(([d, v]) => ({ x: ms(d), y: v }));
   const marcas = Object.fromEntries(EVENTOS.map((e, i) => [`e${i}`, {
     type: 'point', xValue: ms(e.fecha), yValue: e.precio, radius: 11,
-    backgroundColor: color('--superficie'), borderColor: e.pendiente ? color('--incertidumbre') : color('--primario'), borderWidth: 1.5,
+    backgroundColor: color('--primario'), borderColor: color('--noche-2'), borderWidth: 2,
   }]));
   const numeros = Object.fromEntries(EVENTOS.map((e, i) => [`n${i}`, {
     type: 'label', xValue: ms(e.fecha), yValue: e.precio, content: String(i + 1),
-    color: color('--texto'), font: { family: 'Public Sans', size: 11, weight: '600' },
+    color: color('--sobre-primario'), font: { family: 'Public Sans', size: 11, weight: '700' },
   }]));
   graficos.ciclo?.destroy();
   graficos.ciclo = new Chart($('g-ciclo'), {
     type: 'line',
-    data: { datasets: [{ label: 'Brent', data: serie, borderColor: color('--texto'), borderWidth: 1.25, pointRadius: 0 }] },
-    options: base(ejes(serie[0].x, serie.at(-1).x, { year: 'numeric' }),
+    data: { datasets: [{ label: 'Brent', data: serie, borderColor: color('--sobre-noche'), borderWidth: 1.25, pointRadius: 0,
+      fill: 'origin', backgroundColor: color('--incertidumbre-fondo') }] },
+    options: base(ejes(serie[0].x, serie.at(-1).x, { year: 'numeric' }, true),
       { annotation: { annotations: { ...marcas, ...numeros } } }),
   });
 }
@@ -206,7 +214,7 @@ function pintar() {
   const p0 = datos.prevision[0];
   $('precio-hoy').textContent = dolar.format(p0.precio_hoy);
   $('fecha-hoy').textContent = fechaLarga(p0.fecha_hoy);
-  if (!$('pestanas').children.length) pestanas();
+  pestanas();      // se rehace: las tarjetas muestran la previsión de cada plazo
   elegir(actual);
   graficoCiclo();
 }

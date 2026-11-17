@@ -1,9 +1,9 @@
 # DESIGN.md: app de previsión del Brent
 
-Para un comité de dirección o un responsable de compras de energía: tiene que
-parecer un informe de mercado serio y tranquilo, no un juguete de IA. Dirección:
-**editorial financiera**, con papel cálido, tinta oscura, un solo color de acción y
-un ámbar reservado para la incertidumbre. Los tokens viven en `app/estilos.css`
+Para un comité de dirección o un responsable de compras de energía. Dirección:
+**energía al atardecer**: fotos reales del sector (plataforma, petrolero, refinería) en
+la portada y al inicio de cada sección, bandas oscuras color noche, contenido sobre papel
+cálido y un naranja crudo como único color de acento (acciones, previsión y rango). Los tokens viven en `app/estilos.css`
 como variables CSS; las páginas usan los nombres, nunca valores sueltos.
 
 (Dirección elegida sin consultar sitios de referencia: UXKIN no estaba conectado.)
@@ -12,18 +12,16 @@ como variables CSS; las páginas usan los nombres, nunca valores sueltos.
 
 | Token | Claro | Oscuro | Uso |
 |---|---|---|---|
-| `--fondo` | `#FAF8F4` | `#14161A` | Fondo de página (papel cálido) |
-| `--superficie` | `#FFFFFF` | `#1C1F24` | Tarjetas, gráfico, panel de previsión |
-| `--borde` | `#E4DFD6` | `#2E333A` | Bordes y líneas de rejilla |
-| `--texto` | `#1A1A1A` | `#ECE9E3` | Texto principal y serie histórica |
-| `--texto-suave` | `#5C5850` | `#A8A39A` | Texto secundario, ejes, notas |
-| `--primario` | `#0E5A57` | `#4FB3AC` | Botones, enlaces, pestaña activa, línea de previsión |
-| `--primario-hover` | `#0A4542` | `#6CC7C0` | Hover del primario |
-| `--incertidumbre` | `#B5650D` | `#E0A458` | Banda del 80 % y su leyenda (único acento) |
-| `--incertidumbre-fondo` | `#B5650D26` | `#E0A45833` | Relleno de la banda |
-| `--bien` | `#2F7A3E` | `#6FBF7F` | Fiabilidad "aporta valor" |
-| `--aviso` | `#9A6A00` | `#E5B84B` | Fiabilidad "orientativa" |
-| `--mal` | `#A63A2B` | `#E27D6C` | Fiabilidad "no bate al precio de hoy", errores |
+| `--fondo` | `#F4F2EE` | `#0F151D` | Fondo de página (papel cálido) |
+| `--superficie` | `#FFFFFF` | `#17202B` | Tarjetas, gráfico, panel de previsión |
+| `--borde` | `#E3DED5` | `#273342` | Bordes y líneas de rejilla |
+| `--texto` | `#14181F` | `#EDE9E2` | Texto principal y serie histórica |
+| `--texto-suave` | `#5A5F69` | `#A3AAB5` | Texto secundario, ejes, notas |
+| `--noche` / `--noche-2` | `#0D1520` / `#152131` | igual | Portada, bandas con foto, sección del ciclo, pie |
+| `--sobre-noche` / `-suave` | `#F3EFE8` / `#B7BDC7` | igual | Texto sobre fondo noche |
+| `--primario` | `#D9661F` | `#F08A43` | Acento único: botones, enlaces, plazo activo, previsión |
+| `--incertidumbre-fondo` | `#D9661F2E` | `#F08A4333` | Banda y caja del rango del 80 % |
+| `--bien` / `--aviso` / `--mal` | `#2F7A3E` / `#A16A00` / `#B23A2B` | `#6FBF7F` / `#E5B84B` / `#E8806F` | Fiabilidad |
 
 Contraste: `--texto` y `--texto-suave` superan 4,5:1 sobre `--fondo` y `--superficie`
 en los dos modos. El modo oscuro sigue al sistema (`prefers-color-scheme`).
@@ -61,12 +59,13 @@ móvil). Ancho de contenido 1120 px; márgenes laterales de 16 px en móvil.
 
 ## Componentes
 
-- **Selector de horizonte:** tres pestañas (1 semana · 3 meses · 1 año), la activa con
-  fondo `--primario` y texto blanco. Accesibles con teclado (flechas) y foco visible
-  (anillo de 2 px `--primario` con separación de 2 px).
-- **Botón primario:** fondo `--primario`, texto blanco, radio `--r-2`. Hover
-  `--primario-hover`. Desactivado al 45 % de opacidad. **Secundario:** borde `--borde`,
-  texto `--texto`. **Discreto:** solo texto `--primario`, subrayado al pasar.
+- **Selector de horizonte:** tres tarjetas-pestaña (1 semana · 3 meses · 1 año) con el
+  precio previsto, la variación y el rango de cada plazo; la activa con borde
+  `--primario`. En móvil se oculta el rango. Accesibles con teclado (flechas) y foco
+  visible (anillo de 2 px `--primario`).
+- **Botón primario:** píldora (radio 999 px), fondo `--primario`. Hover
+  `--primario-hover`. Desactivado al 45 % de opacidad. **Secundario:** borde y texto del
+  color del fondo en que está.
 - **Panel de previsión:** precio previsto en `--t-cifra`, variación frente al último
   precio, rango del 80 % en `--incertidumbre` y la etiqueta de fiabilidad.
 - **Etiqueta de fiabilidad:** punto de color (`--bien` / `--aviso` / `--mal`) más texto;
@@ -80,5 +79,9 @@ móvil). Ancho de contenido 1120 px; márgenes laterales de 16 px en móvil.
 
 ## Imagen e iconos
 
-Sin fotos ni ilustraciones: el gráfico es la imagen. Iconos de trazo de Lucide (1,5 px),
-solo donde aclaran algo. Sin degradados, sin emojis, sin texto con degradado.
+Fotos de Unsplash (licencia libre, enlazadas en el pie), siempre bajo un velo oscuro
+para que el texto encima tenga contraste: plataforma al atardecer (portada), petrolero
+(ciclo económico), refinería de noche (modelos) y refinería al anochecer (cierre). Iconos
+de trazo estilo Lucide (1,75 px) en las tres tarjetas de explicación. Sin emojis ni texto
+con degradado. Los gráficos van dentro de un `.lienzo` de altura fija (340 px; 260 en
+móvil): sin ella Chart.js hace crecer el lienzo en cada redibujado.

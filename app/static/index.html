@@ -7,56 +7,64 @@
   <meta name="description" content="Previsión del precio del Brent a 1 semana, 3 meses y 1 año con redes recurrentes, su rango de incertidumbre y cuánto fiarse de ella.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
   <a class="saltar" href="#prevision">Saltar a la previsión</a>
 
-  <header class="nav">
-    <nav class="contenedor" aria-label="Principal">
-      <a class="marca" href="#">Previsión del Brent</a>
+  <!-- Portada con foto: plataforma petrolífera al atardecer -->
+  <header class="portada">
+    <img class="portada-foto" alt="" fetchpriority="high"
+      src="https://images.unsplash.com/photo-1791039624964-9f11e7c7cff1?w=1600&q=70&auto=format&fit=crop"
+      srcset="https://images.unsplash.com/photo-1791039624964-9f11e7c7cff1?w=800&q=70&auto=format&fit=crop 800w,
+              https://images.unsplash.com/photo-1791039624964-9f11e7c7cff1?w=1600&q=70&auto=format&fit=crop 1600w,
+              https://images.unsplash.com/photo-1791039624964-9f11e7c7cff1?w=2400&q=70&auto=format&fit=crop 2400w"
+      sizes="100vw">
+    <nav class="contenedor nav" aria-label="Principal">
+      <a class="marca" href="#"><span class="gota" aria-hidden="true"></span>Previsión del Brent</a>
       <ul>
         <li><a href="#prevision">Previsión</a></li>
         <li><a href="#ciclo">Ciclo económico</a></li>
         <li><a href="#comparativa">Comparativa</a></li>
-        <li><a href="#actualizar">Actualizar</a></li>
+        <li><a href="#actualizar">Actualización</a></li>
       </ul>
     </nav>
+    <div class="contenedor portada-texto">
+      <p class="antetitulo">Brent · referencia del crudo en Europa</p>
+      <h1>¿Cuánto costará el barril de Brent?</h1>
+      <p class="entradilla">Previsión a una semana, tres meses y un año con redes neuronales recurrentes, con el
+        rango en el que suele caer el precio y una respuesta honesta sobre cuánto fiarse de ella.</p>
+      <div class="kpis cifras" aria-live="polite">
+        <div><span>Último precio</span><b id="precio-hoy">—</b></div>
+        <div><span>Fecha del dato</span><b id="fecha-hoy">—</b></div>
+      </div>
+      <a class="boton" href="#prevision">Ver la previsión</a>
+    </div>
   </header>
 
   <main>
-    <div class="contenedor cabecera">
-      <h1>¿Cuánto costará el barril de Brent?</h1>
-      <p>Previsión a una semana, tres meses y un año con redes neuronales recurrentes, con el rango
-        en el que suele caer el precio y una respuesta honesta sobre cuánto fiarse de ella.</p>
-      <div class="dato-hoy cifras" aria-live="polite">
-        <div><span class="suave pequeno">Último precio</span><b id="precio-hoy">—</b></div>
-        <div><span class="suave pequeno">Fecha del dato</span><b id="fecha-hoy">—</b></div>
-      </div>
-    </div>
-
     <section id="prevision" aria-labelledby="t-prevision">
       <div class="contenedor">
-        <h2 id="t-prevision">Previsión</h2>
-        <div class="pestanas" role="tablist" aria-label="Horizonte de la previsión" id="pestanas"></div>
+        <p class="antetitulo">Previsión</p>
+        <h2 id="t-prevision">Elige el plazo</h2>
+        <div class="horizontes" role="tablist" aria-label="Horizonte de la previsión" id="pestanas"></div>
 
         <div class="prevision" id="panel-prevision" role="tabpanel" tabindex="0">
           <div class="tarjeta panel">
-            <div>
-              <span class="suave pequeno" id="p-cuando">—</span>
-              <div class="cifra" id="p-previsto">—</div>
-              <span class="variacion cifras" id="p-variacion"></span>
-            </div>
-            <div>
-              <span class="suave pequeno">Rango del 80 %</span>
+            <span class="suave pequeno" id="p-cuando">—</span>
+            <div class="cifra" id="p-previsto">—</div>
+            <span class="variacion cifras" id="p-variacion"></span>
+            <div class="rango-caja">
+              <span class="pequeno">Rango del 80 %</span>
               <div class="rango cifras" id="p-rango">—</div>
             </div>
             <span class="fiabilidad" id="p-fiabilidad"></span>
             <p class="suave pequeno" id="p-modelo"></p>
           </div>
           <div class="tarjeta grafico">
-            <canvas id="g-prevision" role="img" aria-label="Precio del último año y previsión con su rango"></canvas>
+            <div class="lienzo"><canvas id="g-prevision" role="img" aria-label="Precio reciente y previsión con su rango"></canvas></div>
             <div class="leyenda" aria-hidden="true">
               <span>Precio real</span><span class="l-prev">Previsión</span><span class="l-rango">Rango del 80 %</span>
             </div>
@@ -64,52 +72,82 @@
         </div>
 
         <div class="explicacion">
-          <div><h3>Qué dice</h3><p id="x-que"></p></div>
-          <div><h3>Cuánto fiarse</h3><p id="x-fiar"></p></div>
-          <div><h3>Qué puede invalidarla</h3><p id="x-riesgos"></p></div>
+          <div class="tarjeta">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <h3>Qué dice</h3><p id="x-que"></p>
+          </div>
+          <div class="tarjeta">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            <h3>Cuánto fiarse</h3><p id="x-fiar"></p>
+          </div>
+          <div class="tarjeta">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <h3>Qué puede invalidarla</h3><p id="x-riesgos"></p>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="ciclo" aria-labelledby="t-ciclo">
+    <section id="ciclo" class="oscura" aria-labelledby="t-ciclo">
+      <figure class="banda">
+        <img alt="Petrolero navegando junto a la costa"
+          src="https://images.unsplash.com/photo-1754913905804-2d811fdece50?w=1600&q=70&auto=format&fit=crop&h=600"
+          srcset="https://images.unsplash.com/photo-1754913905804-2d811fdece50?w=800&q=70&auto=format&fit=crop&h=400 800w,
+                  https://images.unsplash.com/photo-1754913905804-2d811fdece50?w=1600&q=70&auto=format&fit=crop&h=600 1600w"
+          sizes="100vw">
+        <figcaption class="contenedor">
+          <p class="antetitulo">Ciclo económico</p>
+          <h2 id="t-ciclo">El Brent de 2000 a hoy</h2>
+          <p>Las subidas acompañan a las fases de crecimiento mundial; los desplomes, a las crisis y a los excesos de oferta.</p>
+        </figcaption>
+      </figure>
       <div class="contenedor">
-        <h2 id="t-ciclo">El Brent y el ciclo económico, 2000–hoy</h2>
-        <p class="suave">Cada número del gráfico es un pico o una caída explicada debajo. Las subidas
-          acompañan a las fases de crecimiento mundial y los desplomes, a las crisis y a los excesos de oferta.</p>
-        <div class="tarjeta ciclo-grafico">
-          <canvas id="g-ciclo" role="img" aria-label="Precio semanal del Brent desde 2000 con los principales picos y caídas numerados"></canvas>
+        <div class="tarjeta grafico">
+          <div class="lienzo alto"><canvas id="g-ciclo" role="img" aria-label="Precio semanal del Brent desde 2000 con los principales picos y caídas numerados"></canvas></div>
         </div>
         <ol class="eventos" id="eventos"></ol>
       </div>
     </section>
 
     <section id="comparativa" aria-labelledby="t-comparativa">
+      <figure class="banda">
+        <img alt="Refinería de petróleo iluminada de noche"
+          src="https://images.unsplash.com/photo-1726111262949-e22631a8c376?w=1600&q=70&auto=format&fit=crop&h=600"
+          srcset="https://images.unsplash.com/photo-1726111262949-e22631a8c376?w=800&q=70&auto=format&fit=crop&h=400 800w,
+                  https://images.unsplash.com/photo-1726111262949-e22631a8c376?w=1600&q=70&auto=format&fit=crop&h=600 1600w"
+          sizes="100vw">
+        <figcaption class="contenedor">
+          <p class="antetitulo">Los modelos</p>
+          <h2 id="t-comparativa">RNN, LSTM y GRU: cuál se usa y por qué</h2>
+          <p>Mismos datos, misma ventana de 60 días y la misma búsqueda de hiperparámetros para las tres.</p>
+        </figcaption>
+      </figure>
       <div class="contenedor">
-        <h2 id="t-comparativa">RNN, LSTM y GRU: cuál se usa y por qué</h2>
-        <p class="suave">Las tres redes se entrenaron con los mismos datos, la misma ventana de 60 días y la misma
-          búsqueda de hiperparámetros. El modelo de cada horizonte se eligió por su error en validación (2012–2020),
-          antes de mirar el test (2021–2026). La mejora es el error frente a suponer que el precio no cambia:
-          en positivo, mejor que el precio de hoy.</p>
-        <div class="tabla-envoltura" tabindex="0" role="region" aria-label="Tabla comparativa">
+        <p class="suave intro">El modelo de cada plazo se eligió por su error en validación (2012–2020), antes de mirar
+          el test (2021–2026). La mejora es el error frente a suponer que el precio no cambia: en positivo, mejor que
+          el precio de hoy.</p>
+        <div class="tarjeta tabla-envoltura" tabindex="0" role="region" aria-label="Tabla comparativa">
           <table id="tabla"></table>
         </div>
-        <ul class="conclusiones">
-          <li><b>1 semana:</b> ninguna red se separa del precio de hoy. Lo que aporta valor es el rango.</li>
-          <li><b>3 meses:</b> la LSTM era la mejor en validación (+12,9 %), pero en 2021–2026 no se sostiene.
-            RNN y GRU empatan con el precio de hoy.</li>
-          <li><b>1 año:</b> ninguna red mejora al precio de hoy en test. A este plazo deciden hechos que hoy no se conocen.</li>
-        </ul>
+        <div class="conclusiones">
+          <div class="tarjeta"><b>1 semana</b><p>Ninguna red se separa del precio de hoy. Lo que aporta valor es el rango.</p></div>
+          <div class="tarjeta"><b>3 meses</b><p>La LSTM era la mejor en validación (+12,9 %), pero en 2021–2026 no se sostiene. RNN y GRU empatan con el precio de hoy.</p></div>
+          <div class="tarjeta"><b>1 año</b><p>Ninguna red mejora al precio de hoy en test. A este plazo deciden hechos que hoy no se conocen.</p></div>
+        </div>
       </div>
     </section>
 
-    <section id="actualizar" aria-labelledby="t-actualizar">
-      <div class="contenedor">
-        <h2 id="t-actualizar">Mantenerla al día</h2>
-        <p class="suave" id="modo-servidor">Descarga los últimos precios de FRED (EIA) y Yahoo Finance y recalcula la previsión. El
+    <section id="actualizar" class="cierre" aria-labelledby="t-actualizar">
+      <img class="cierre-foto" alt=""
+        src="https://images.unsplash.com/photo-1722246128616-76c934278e0a?w=1600&q=70&auto=format&fit=crop">
+      <div class="contenedor cierre-texto">
+        <p class="antetitulo">Actualización</p>
+        <h2 id="t-actualizar">Siempre con los últimos datos</h2>
+        <p id="modo-servidor">Descarga los últimos precios de FRED (EIA) y Yahoo Finance y recalcula la previsión. El
           reentrenamiento vuelve a ajustar los tres modelos elegidos con todos los datos hasta hoy; tarda unos minutos.</p>
-        <p class="suave" id="modo-estatico" hidden>Esta página se actualiza sola cada día laborable: descarga los últimos
-          precios de FRED (EIA) y Yahoo Finance y recalcula la previsión. El día 1 de cada mes, además, reentrena los tres
-          modelos elegidos con todos los datos hasta ese día. Última actualización: <b id="generado">—</b>.</p>
+        <p id="modo-estatico" hidden>Esta página se actualiza sola cada día laborable: descarga los últimos precios de
+          FRED (EIA) y Yahoo Finance y recalcula la previsión. El día 1 de cada mes, además, reentrena los tres modelos
+          elegidos con todos los datos hasta ese día. Última actualización: <b id="generado">—</b>.</p>
         <div class="acciones" id="acciones">
           <button class="boton" id="b-actualizar" type="button">Descargar datos nuevos</button>
           <button class="boton secundario" id="b-reentrenar" type="button">Reentrenar los modelos</button>
@@ -123,6 +161,11 @@
     <div class="contenedor">
       <p>Datos: Brent y WTI de la EIA, tipos de cambio, tipo del BCE y VIX vía FRED; futuros, cobre, oro e índice
         del dólar de Yahoo Finance. Modelos RNN, LSTM y GRU en PyTorch.</p>
+      <p>Fotos de Unsplash:
+        <a href="https://unsplash.com/photos/XD9x5UsIkpI">plataforma</a> (Gabriel Xavier),
+        <a href="https://unsplash.com/photos/AkmqQx299RY">petrolero</a>,
+        <a href="https://unsplash.com/photos/L-RSVfhluGw">refinería de noche</a> y
+        <a href="https://unsplash.com/photos/3svqKKUUDRY">refinería al anochecer</a>.</p>
       <p>Herramienta educativa de apoyo a decisiones. No es asesoramiento financiero.</p>
     </div>
   </footer>
