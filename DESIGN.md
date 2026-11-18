@@ -4,7 +4,7 @@ Para un comité de dirección o un responsable de compras de energía. Direcció
 **informe financiero en blanco y negro**: tinta sobre papel, sin fotos ni color de
 acento. La estructura la hacen el espacio, las líneas finas y la tipografía; las
 secciones alternan papel blanco, gris muy claro y negro. El color solo aparece donde
-significa algo: subida o bajada del precio y fiabilidad de la previsión. Los tokens viven
+significa algo: la fiabilidad de la previsión. Los tokens viven
 en `app/static/estilos.css` como variables CSS; las páginas usan los nombres, nunca
 valores sueltos.
 
@@ -21,7 +21,7 @@ valores sueltos.
 | `--serie-2` / `--serie-3` | `#8A8A91` / `#C4C4CA` | `#7C7C84` / `#4A4A51` | Segunda serie y barras que no cumplen / bordes del rango |
 | `--primario` / `--sobre-primario` | `#0B0B0C` / `#FFFFFF` | `#F4F4F2` / `#0B0B0C` | Botones, marcas del ciclo, etiqueta «en la app» |
 | `--tenue` | tinta al 7 % | papel al 10 % | Banda del rango del 80 %, fila elegida, hover |
-| `--bien` / `--aviso` / `--mal` | `#17734A` / `#8A5A00` / `#B3261E` | `#4CC38A` / `#E2B341` / `#F2766B` | Fiabilidad; `--bien` y `--mal` también subida y bajada |
+| `--bien` / `--aviso` / `--mal` | `#17734A` / `#8A5A00` / `#B3261E` | `#4CC38A` / `#E2B341` / `#F2766B` | Fiabilidad de la previsión (nunca subida o bajada del precio: se leería como bueno o malo) |
 
 La columna «Oscuro» está escrita una sola vez, en la clase `.oscura`, que redefine los
 mismos tokens: todo lo que hay dentro se invierte solo, gráficos incluidos. La llevan
@@ -41,7 +41,7 @@ en las dos paletas.
 
 | Token | Tamaño / interlineado | Uso |
 |---|---|---|
-| `--t-portada` | 44–80 px / 0.98 | Título de la portada |
+| `--t-portada` | 40–56 px / 0.98 | Título de la portada (dos líneas en escritorio) |
 | `--t-cifra` | 44–64 px / 1 | Precio previsto |
 | `--t-h2` | 30–44 px / 1.08 | Título de sección |
 | `--t-h3` | 18 / 1.3 | Subtítulos |
@@ -68,17 +68,20 @@ líneas de 1 px (`--borde`, o `--texto` cuando encabezan una columna).
 
 - **Barra:** fija arriba, siempre negra: marca, enlaces de ancla y último precio. El
   enlace de la sección que se está leyendo queda subrayado (`aria-current`).
-- **Portada:** negra. Título, entradilla y dos botones a la izquierda; a la derecha, la
-  historia semanal del Brent como una sola línea. Debajo, cuatro cifras separadas por
-  líneas finas: último precio y la previsión de cada plazo (enlaces que bajan a la
-  previsión con ese plazo elegido).
+- **Portada:** negra y pensada para caber en la primera pantalla de un portátil, con
+  los rangos incluidos. Título, entradilla y dos botones a la izquierda; a la derecha, la
+  historia semanal del Brent como una sola línea. Debajo, cuatro celdas separadas por
+  líneas finas: el último precio publicado (con su fecha y cuántos días tiene) y, por
+  cada plazo, el rango, la etiqueta de fiabilidad y la previsión central (enlaces que
+  bajan a la previsión con ese plazo elegido).
 - **Cabecera de sección:** número y nombre en mono (`01 — Previsión`), título y, si
   hace falta, un párrafo.
-- **Selector de horizonte:** tres celdas en un marco de tinta; un bloque negro se desliza
-  a la elegida y su texto se invierte. En móvil se oculta el rango. Accesible con teclado
-  (flechas) y foco visible (anillo de 2 px `--texto`).
-- **Panel de previsión:** un solo marco: a la izquierda el precio previsto en
-  `--t-cifra`, la variación, el rango del 80 % y la fiabilidad; a la derecha el gráfico.
+- **Selector de horizonte:** tres celdas en un marco de tinta, cada una con el rango y la
+  previsión central; un bloque negro se desliza a la elegida y su texto se invierte. En
+  móvil se oculta la previsión central. Accesible con teclado (flechas) y foco visible
+  (anillo de 2 px `--texto`).
+- **Panel de previsión:** un solo marco: a la izquierda el rango en `--t-cifra`, cuánto
+  acertó de verdad, la previsión central y la fiabilidad; a la derecha el gráfico.
 - **Etiqueta de fiabilidad:** punto de color (`--bien` / `--aviso` / `--mal`) más texto;
   nunca solo color.
 - **Botón primario:** rectángulo de tinta (`--primario`), 48 px de alto. **Secundario:**
@@ -87,6 +90,18 @@ líneas de 1 px (`--borde`, o `--texto` cuando encabezan una columna).
 - **Columnas (`.columnas`):** tres textos, cada uno bajo una línea de tinta.
 - **Tabla:** cifras en mono, cabecera en mayúsculas, fila del modelo de la app en
   `--tenue` con la etiqueta «EN LA APP».
+
+## Honestidad del dato
+
+- **El rango manda.** En portada, selector y panel el dato grande es el rango; la
+  previsión central va siempre atenuada (`.centro`, en `--texto-suave`) y junto a su
+  etiqueta de fiabilidad. Ninguna red mejora con claridad al precio de hoy: enseñar la
+  cifra central en grande prometería más de lo que el test respalda.
+- **Nunca «rango del 80 %» a secas.** Se llama «rango habitual» y, donde hay sitio, se
+  dice cuánto acertó en 2021–2026 y que se calculó para el 80 %.
+- **El dato tiene fecha.** El spot del Brent se publica con unos 7 días de retraso: junto
+  al último precio van su fecha y los días que tiene, los plazos cuentan desde ese día y,
+  si la fecha objetivo ya ha llegado, se dice.
 
 ## Gráficos
 

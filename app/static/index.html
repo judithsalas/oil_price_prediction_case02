@@ -64,7 +64,11 @@
       </div>
       <div class="contenedor">
         <div class="resumen cifras entra" style="--d:10" id="resumen">
-          <div><span class="etq">Último precio</span><b id="precio-hoy">—</b><span class="pequeno suave" id="fecha-hoy">—</span></div>
+          <div>
+            <span class="etq">Último precio publicado</span><b id="precio-hoy">—</b>
+            <span class="pequeno suave" id="fecha-hoy">—</span>
+            <span class="pequeno suave">Los plazos cuentan desde ese día.</span>
+          </div>
         </div>
       </div>
     </section>
@@ -80,11 +84,11 @@
         <div class="prevision marco rev" id="panel-prevision" role="tabpanel" tabindex="0">
           <div class="panel">
             <span class="etq" id="p-cuando">—</span>
-            <div class="cifra" id="p-previsto">—</div>
-            <span class="variacion cifras" id="p-variacion"></span>
-            <div class="rango-caja">
-              <span class="etq">Rango del 80 %</span>
-              <div class="rango cifras" id="p-rango">—</div>
+            <div class="cifra"><span id="p-bajo">—</span><span id="p-alto"></span></div>
+            <span class="pequeno suave" id="p-acierto"></span>
+            <div class="centro-caja">
+              <span class="etq">Previsión central</span>
+              <div class="centro cifras" id="p-centro">—</div>
             </div>
             <span class="fiabilidad" id="p-fiabilidad"></span>
             <p class="suave pequeno" id="p-modelo"></p>
@@ -92,7 +96,7 @@
           <div class="grafico">
             <div class="lienzo"><canvas id="g-prevision" role="img" aria-label="Precio reciente y previsión con su rango"></canvas></div>
             <div class="leyenda" aria-hidden="true">
-              <span>Precio real</span><span class="l-prev">Previsión</span><span class="l-rango">Rango del 80 %</span>
+              <span>Precio real</span><span class="l-prev">Previsión central</span><span class="l-rango">Rango habitual</span>
             </div>
           </div>
         </div>
@@ -115,7 +119,7 @@
         <div class="marco grafico rev">
           <div class="lienzo alto"><canvas id="g-test" role="img" aria-label="Precio real frente a la previsión en 2021–2026"></canvas></div>
           <div class="leyenda" aria-hidden="true">
-            <span>Precio real</span><span class="l-gris">Previsión</span><span class="l-ingenuo">Precio de hoy (ingenuo)</span><span class="l-rango">Rango del 80 %</span>
+            <span>Precio real</span><span class="l-gris">Previsión</span><span class="l-ingenuo">Precio de hoy (ingenuo)</span><span class="l-rango">Rango habitual</span>
           </div>
         </div>
         <div class="dos">
@@ -127,8 +131,8 @@
           </div>
           <div class="marco bloque rev" style="--d:1">
             <h3>Veces que el precio cayó dentro del rango</h3>
-            <p class="suave pequeno">La línea marca el 80 % prometido: por debajo, el rango se quedó corto ese año.</p>
-            <div class="lienzo bajo"><canvas id="g-cobertura" role="img" aria-label="Cobertura del rango del 80 % por año"></canvas></div>
+            <p class="suave pequeno">El rango se calculó para acertar el 80 % de las veces (la línea): por debajo, se quedó corto ese año.</p>
+            <div class="lienzo bajo"><canvas id="g-cobertura" role="img" aria-label="Acierto del rango por año"></canvas></div>
             <div class="leyenda" aria-hidden="true"><span class="l-si">Cumple el 80 %</span><span class="l-no">Se queda corto</span></div>
           </div>
         </div>
@@ -193,7 +197,8 @@
             reentrenamiento vuelve a ajustar los tres modelos elegidos con todos los datos hasta hoy; tarda unos minutos.</p>
           <p class="suave" id="modo-estatico" hidden>Esta página se actualiza sola cada día laborable: descarga los últimos precios de
             FRED (EIA) y Yahoo Finance y recalcula la previsión. El día 1 de cada mes, además, reentrena los tres modelos
-            elegidos con todos los datos hasta ese día. Última actualización: <b id="generado">—</b>.</p>
+            elegidos con todos los datos hasta ese día. Última actualización: <b id="generado">—</b>, con
+            precios hasta el <b id="dato-hasta">—</b>.</p>
         </header>
         <div class="acciones" id="acciones">
           <button class="boton" id="b-actualizar" type="button">Descargar datos nuevos</button>

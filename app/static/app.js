@@ -31,7 +31,11 @@ const fechaLarga = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('es-E
 const ms = (iso) => Date.parse(iso + 'T12:00:00');
 // Los colores salen de las variables CSS del propio lienzo: dentro de una sección .oscura cambian solos
 const color = (nombre, el = document.documentElement) => getComputedStyle(el).getPropertyValue(nombre).trim();
-const tendencia = (v) => (v > 0 ? 'sube' : v < 0 ? 'baja' : '');
+// El rango es el dato principal de cada plazo; la previsión central lo acompaña, atenuada
+const rango = (p) => `${numero(p.bajo, 0)}–${numero(p.alto, 0)} $`;
+const centro = (p) => `centro ${dolar.format(p.previsto)} (${conSigno(p.variacion)} %)`;
+// Días naturales desde una fecha hasta hoy (negativo si aún no ha llegado)
+const diasDesde = (iso) => Math.round((Date.now() - ms(iso)) / 864e5);
 const $ = (id) => document.getElementById(id);
 
 let datos = null;
@@ -135,11 +139,13 @@ function contar(el, meta, formato) {
 }
 
 function textos(p) {
-  const que = `El modelo (${p.red}) prevé que dentro de ${p.nombre}, hacia el ${fechaLarga(p.fecha_objetivo)}, ` +
-    `el Brent esté en torno a ${dolar.format(p.previsto)}, un ${conSigno(p.variacion)} % sobre hoy ` +
-    `(${dolar.format(p.precio_hoy)}). En 8 de cada 10 casos parecidos del pasado el precio acabó entre ` +
-    `${dolar.format(p.bajo)} y ${dolar.format(p.alto)}.`;
-  const cobertura = `En 2021–2026 el precio real cayó dentro del rango el ${numero(p.cobertura_test * 100, 0)} % de las veces (el objetivo es el 80 %).`;
+  // El spot del Brent se publica con días de retraso: a 1 semana, la fecha objetivo suele haber llegado ya
+  const llegada = diasDesde(p.fecha_objetivo) < 0 ? '' :
+    ` Esa fecha ya ha llegado: el último precio publicado es de hace ${diasDesde(p.fecha_hoy)} días, así que esta previsión habla del presente.`;
+  const que = `A ${p.nombre} del último precio publicado, hacia el ${fechaLarga(p.fecha_objetivo)}, lo habitual sería ver el ` +
+    `Brent entre ${dolar.format(p.bajo)} y ${dolar.format(p.alto)}. La previsión central del modelo (${p.red}) es ` +
+    `${dolar.format(p.previsto)}, un ${conSigno(p.variacion)} % sobre ese último precio (${dolar.format(p.precio_hoy)}).${llegada}`;
+  const cobertura = `El rango se calculó para acertar el 80 % de las veces; en 2021–2026 acertó el ${numero(p.cobertura_test * 100, 0)} %.`;
   const fiar = {
     bien: `En la prueba con datos de 2021 a 2026 este modelo se equivocó un ${numero(p.mejora_test, 0)} % menos que suponer que el precio no cambia. ${cobertura}`,
     aviso: `En la prueba con datos de 2021 a 2026 acertó prácticamente igual que suponer que el precio no cambia ` +
@@ -159,12 +165,10 @@ function pestanas() {
     b.type = 'button';
     b.role = 'tab';
     b.id = `pestana-${p.horizonte}`;
-    b.innerHTML = '<span class="h-nombre etq"></span><span class="h-precio"></span><span class="h-var"></span><span class="h-rango"></span>';
+    b.innerHTML = '<span class="h-nombre etq"></span><span class="h-rango"></span><span class="h-centro centro"></span>';
     b.querySelector('.h-nombre').textContent = `A ${p.nombre}`;
-    b.querySelector('.h-precio').textContent = dolar.format(p.previsto);
-    b.querySelector('.h-var').className = `h-var variacion ${tendencia(p.variacion)}`;
-    b.querySelector('.h-var').textContent = `${conSigno(p.variacion)} %`;
-    b.querySelector('.h-rango').textContent = `rango ${numero(p.bajo, 0)}–${numero(p.alto, 0)} $`;
+    b.querySelector('.h-rango').textContent = rango(p);
+    b.querySelector('.h-centro').textContent = centro(p);
     b.setAttribute('aria-controls', 'panel-prevision');
     b.addEventListener('click', () => elegir(i));
     lista.append(b);
@@ -188,11 +192,13 @@ function elegir(i) {
   });
   $('pestanas').style.setProperty('--i', i);      // el bloque de tinta se desliza a la pestaña elegida
   $('panel-prevision').setAttribute('aria-labelledby', `pestana-${p.horizonte}`);
-  $('p-cuando').textContent = `Previsión a ${p.nombre} · ${fechaLarga(p.fecha_objetivo)}`;
-  contar($('p-previsto'), p.previsto, dolar.format);
-  $('p-variacion').className = `variacion cifras ${tendencia(p.variacion)}`;
-  $('p-variacion').textContent = `${conSigno(p.variacion)} % sobre hoy`;
-  $('p-rango').textContent = `${dolar.format(p.bajo)} – ${dolar.format(p.alto)}`;
+  $('p-cuando').textContent = `Rango habitual a ${p.nombre} · ${fechaLarga(p.fecha_objetivo)}` +
+    (diasDesde(p.fecha_objetivo) < 0 ? '' : ' (ya ha llegado)');
+  contar($('p-bajo'), p.bajo, (v) => `${numero(v, 0)}–`);
+  contar($('p-alto'), p.alto, (v) => `${numero(v, 0)} $`);
+  // El rango no se anuncia como "del 80 %": se dice cuánto acertó de verdad
+  $('p-acierto').textContent = `Acertó el ${numero(p.cobertura_test * 100, 0)} % de las veces en 2021–2026; se calculó para el 80 %.`;
+  $('p-centro').textContent = `${dolar.format(p.previsto)} (${conSigno(p.variacion)} %)`;
   $('p-fiabilidad').className = `fiabilidad ${p.fiabilidad}`;
   $('p-fiabilidad').textContent = p.etiqueta;
   $('p-modelo').textContent = `Modelo ${p.red}, media de 3 redes. Entrenado: ${p.entrenado}.`;
@@ -295,18 +301,20 @@ function graficoPortada() {
   svg.parentElement.classList.add('dibujado');
 }
 
-// Portada: la previsión de cada plazo; al pulsar una se baja a la previsión con ese plazo elegido
+// Portada: el rango de cada plazo, con su previsión central atenuada y cuánto fiarse;
+// al pulsar una se baja a la previsión con ese plazo elegido
 function resumen() {
   const caja = $('resumen');
   caja.querySelectorAll('a').forEach((a) => a.remove());
   datos.prevision.forEach((p, i) => {
     const a = document.createElement('a');
     a.href = '#prevision';
-    a.innerHTML = '<span class="etq"></span><b></b><span></span>';
-    a.children[0].textContent = `A ${p.nombre}`;
-    contar(a.children[1], p.previsto, dolar.format);
-    a.children[2].className = `variacion ${tendencia(p.variacion)}`;
-    a.children[2].textContent = `${conSigno(p.variacion)} %`;
+    a.innerHTML = '<span class="etq"></span><b></b><span></span><span class="centro"></span>';
+    a.children[0].textContent = `Rango a ${p.nombre}`;
+    a.children[1].textContent = rango(p);
+    a.children[2].className = `fiabilidad ${p.fiabilidad}`;     // justo bajo el rango: es lo que no debe perderse
+    a.children[2].textContent = p.etiqueta;
+    a.children[3].textContent = centro(p);
     a.addEventListener('click', () => elegir(i));
     caja.append(a);
   });
@@ -449,7 +457,7 @@ function tabla() {
   const pct = (v) => (v == null ? '—' : `${conSigno(v)} %`);
   let html = `<caption class="oculto">MAE, RMSE, mejora frente al ingenuo, parámetros y tiempo de entrenamiento por red y horizonte</caption>
     <thead><tr><th scope="col">Modelo</th><th scope="col">Mejora validación</th><th scope="col">Mejora test</th>
-    <th scope="col">MAE test</th><th scope="col">RMSE test</th><th scope="col">Rango del 80 % acierta</th>
+    <th scope="col">MAE test</th><th scope="col">RMSE test</th><th scope="col">Acierto del rango</th>
     <th scope="col">Parámetros</th><th scope="col">Entrenamiento</th></tr></thead><tbody>`;
   for (const h of Object.keys(nombres)) {
     html += `<tr class="grupo"><th colspan="8" scope="colgroup">${nombres[h]}</th></tr>`;
@@ -469,8 +477,11 @@ function tabla() {
 function pintar() {
   const p0 = datos.prevision[0];
   contar($('precio-hoy'), p0.precio_hoy, dolar.format);
-  $('fecha-hoy').textContent = fechaLarga(p0.fecha_hoy);
-  $('vivo').textContent = `Brent ${dolar.format(p0.precio_hoy)}`;
+  // El spot del Brent se publica con días de retraso: se dice de cuándo es el dato
+  const atraso = diasDesde(p0.fecha_hoy);
+  $('fecha-hoy').textContent = `${fechaLarga(p0.fecha_hoy)} · ${atraso > 1 ? `hace ${atraso} días` : atraso === 1 ? 'ayer' : 'hoy'}`;
+  $('dato-hasta').textContent = fechaLarga(p0.fecha_hoy);
+  $('vivo').textContent = `Brent ${dolar.format(p0.precio_hoy)} · ${new Date(ms(p0.fecha_hoy)).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
   resumen();
   graficoPortada();
   pestanas();      // se rehace: las celdas muestran la previsión de cada plazo
