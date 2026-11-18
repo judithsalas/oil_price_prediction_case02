@@ -119,6 +119,21 @@ tu usuario en lugar de `TU_USUARIO`:
 Para generar la web en local sin subirla: `poetry run python -m scripts.exportar_web` (la deja
 en `web/`).
 
+### También en Vercel (opcional)
+
+El mismo workflow sube la web a Vercel si encuentra el secreto `VERCEL_TOKEN`; sin él, ese
+paso no hace nada. Una sola vez:
+
+1. Crear un token en <https://vercel.com/account/tokens>, con el equipo propio como ámbito.
+2. Guardarlo en GitHub como secreto `VERCEL_TOKEN` (*Settings* → *Secrets and variables* →
+   *Actions*).
+3. Lanzar el workflow. La primera vez crea en Vercel el proyecto `prevision-brent` (el nombre
+   está en `PROYECTO_VERCEL`, en el workflow); la dirección pública aparece en ese proyecto,
+   en *Domains*.
+
+No hay que importar el repositorio desde Vercel: el servidor FastAPI no se despliega allí,
+solo la web estática ya generada.
+
 ## Estructura
 
 ```

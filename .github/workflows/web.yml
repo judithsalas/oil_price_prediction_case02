@@ -4,6 +4,7 @@
 # - El día 1 de cada mes (o a mano, marcando "reentrenar"): además reentrena.
 # Los modelos reentrenados se guardan en el propio Space (models/app/) y se
 # recuperan en cada ejecución. Necesita el secreto HF_TOKEN (token de escritura).
+# Si además existe el secreto VERCEL_TOKEN, la misma web se publica también en Vercel.
 name: Web del Space
 
 on:
@@ -21,6 +22,7 @@ on:
 
 env:
   SPACE: judithsalas/prevision-brent
+  PROYECTO_VERCEL: prevision-brent      # nombre del proyecto en Vercel
 
 jobs:
   web:
@@ -60,3 +62,17 @@ jobs:
           if [ -d models/app ]; then
             hf upload "$SPACE" models/app models/app --repo-type space --commit-message "Modelos reentrenados"
           fi
+
+      - name: Subir a Vercel (si hay token)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "No hay secreto VERCEL_TOKEN: la web solo se publica en Hugging Face."
+            exit 0
+          fi
+          # La carpeta se llama como el proyecto y está fuera del repositorio: la primera
+          # vez Vercel crea el proyecto con ese nombre y después lo encuentra por él.
+          cp -r web "$RUNNER_TEMP/$PROYECTO_VERCEL"
+          rm -f "$RUNNER_TEMP/$PROYECTO_VERCEL/README.md"     # la ficha del Space no hace falta allí
+          npx --yes vercel@66.2.0 deploy --prod --yes --cwd "$RUNNER_TEMP/$PROYECTO_VERCEL"

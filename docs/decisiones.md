@@ -444,7 +444,8 @@ El diseño visual está en `DESIGN.md`. Aquí van las decisiones de fondo.
   `datos.json` con todo ya calculado. Se eligió así porque los Spaces estáticos son
   gratis y los de Docker exigen suscripción. A cambio, la página publicada no calcula
   nada: la actualiza GitHub Actions (`.github/workflows/web.yml`), también en cada
-  push a `main`.
+  push a `main`. El mismo workflow sube esa carpeta a Vercel si tiene un token: es otra
+  dirección para la misma web, no otro despliegue que mantener.
 
 ### Incorporar datos no es reentrenar
 
