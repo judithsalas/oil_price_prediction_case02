@@ -67,19 +67,23 @@ líneas de 1 px (`--borde`, o `--texto` cuando encabezan una columna).
 ## Componentes
 
 - **Barra:** fija arriba, siempre negra: marca, enlaces de ancla y último precio. El
-  enlace de la sección que se está leyendo queda subrayado (`aria-current`).
+  enlace de la sección que se está leyendo queda subrayado (`aria-current`). Los enlaces
+  se llaman igual que el rótulo de su sección. Por debajo de 720 px no caben: un botón
+  «Menú» los despliega bajo la barra y se pliega al elegir uno.
 - **Portada:** negra y pensada para caber en la primera pantalla de un portátil, con
   los rangos incluidos. Título, entradilla y dos botones a la izquierda; a la derecha, la
   historia semanal del Brent como una sola línea. Debajo, cuatro celdas separadas por
   líneas finas: el último precio publicado (con su fecha y cuántos días tiene) y, por
   cada plazo, el rango, la etiqueta de fiabilidad y la previsión central (enlaces que
-  bajan a la previsión con ese plazo elegido).
+  bajan a la previsión con ese plazo elegido). En una columna (móvil) el orden es
+  pregunta, rangos y gráfico, para que la respuesta quede en la primera pantalla.
 - **Cabecera de sección:** número y nombre en mono (`01 — Previsión`), título y, si
   hace falta, un párrafo.
-- **Selector de horizonte:** tres celdas en un marco de tinta, cada una con el rango y la
-  previsión central; un bloque negro se desliza a la elegida y su texto se invierte. En
-  móvil se oculta la previsión central. Accesible con teclado (flechas) y foco visible
-  (anillo de 2 px `--texto`).
+- **Selector de horizonte:** tres celdas en un marco de tinta con el nombre del plazo y
+  nada más (las cifras están en la portada y en el panel, no se repiten aquí); un bloque
+  negro se desliza a la elegida y su texto se invierte. Accesible con teclado (flechas)
+  y foco visible (anillo de 2 px `--texto`). Hay dos, uno sobre la previsión y otro en
+  «¿Acierta?»: eligen el mismo plazo, así que nunca hay que subir a cambiarlo.
 - **Panel de previsión:** un solo marco: a la izquierda el rango en `--t-cifra`, cuánto
   acertó de verdad, la previsión central y la fiabilidad; a la derecha el gráfico.
 - **Etiqueta de fiabilidad:** punto de color (`--bien` / `--aviso` / `--mal`) más texto;
@@ -89,11 +93,16 @@ líneas de 1 px (`--borde`, o `--texto` cuando encabezan una columna).
 - **Marco (`.marco`):** `--superficie` con borde `--borde`, para gráficos, bloques y tabla.
 - **Columnas (`.columnas`):** tres textos, cada uno bajo una línea de tinta.
 - **Tabla:** cifras en mono, cabecera en mayúsculas, fila del modelo de la app en
-  `--tenue` con la etiqueta «EN LA APP».
+  `--tenue` con la etiqueta «EN LA APP». Nunca se corta ni se desplaza de lado: por debajo
+  de 900 px deja las columnas de parámetros y entrenamiento, y por debajo de 720 px
+  también MAE y RMSE; quedan modelo, mejora en validación, mejora en test y acierto del
+  rango.
+- **Pie:** firma (nombre, asignatura, enlaces al código y a la metodología), fuentes de
+  datos y aviso de que no es asesoramiento financiero.
 
 ## Honestidad del dato
 
-- **El rango manda.** En portada, selector y panel el dato grande es el rango; la
+- **El rango manda.** En portada y panel el dato grande es el rango; la
   previsión central va siempre atenuada (`.centro`, en `--texto-suave`) y junto a su
   etiqueta de fiabilidad. Ninguna red mejora con claridad al precio de hoy: enseñar la
   cifra central en grande prometería más de lo que el test respalda.
@@ -117,6 +126,9 @@ Sin color, las series se distinguen por trazo y peso:
   `--texto` y test rayado.
 - **Ciclo económico:** marcas numeradas que remiten a la lista de sucesos de debajo.
 
+Los ejes de fechas llevan las marcas en inicios de mes o de año, a intervalos iguales
+(`marcasFecha` en `app.js`), y el gráfico de validación frente a test rotula el cero.
+
 Cada gráfico va dentro de un `.lienzo` de altura fija (340 px; 260 en móvil): sin ella
 Chart.js hace crecer el lienzo en cada redibujado.
 
@@ -129,9 +141,11 @@ Una sola curva, `--salida` (`cubic-bezier(.16, 1, .3, 1)`): sale rápido y frena
   cifras cuentan desde cero.
 - **Al entrar en pantalla (`.rev`):** cada bloque sube y aparece; los de un mismo grupo,
   escalonados con `--d`.
-- **Gráficos:** en blanco hasta que se ven; entonces las líneas se descubren de izquierda
-  a derecha y las barras crecen desde su base. Lo hace el plugin `revelado` de
-  `app.js`, no las animaciones de Chart.js.
+- **Gráficos:** en blanco hasta que se ven; entonces se descubren de izquierda a derecha
+  en medio segundo, líneas y barras por igual. Las barras no crecen desde la base: una
+  barra a media altura marcaría un valor que no es. Lo hace el plugin `revelado` de
+  `app.js`, no las animaciones de Chart.js. Los bloques que los contienen (`.rev`)
+  también aparecen en medio segundo.
 - **Cambio de plazo:** el bloque del selector se desliza, la cifra cuenta de la anterior
   a la nueva y el gráfico se vuelve a dibujar.
 

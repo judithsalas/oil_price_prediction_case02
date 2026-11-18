@@ -31,9 +31,6 @@ const fechaLarga = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('es-E
 const ms = (iso) => Date.parse(iso + 'T12:00:00');
 // Los colores salen de las variables CSS del propio lienzo: dentro de una sección .oscura cambian solos
 const color = (nombre, el = document.documentElement) => getComputedStyle(el).getPropertyValue(nombre).trim();
-// El rango es el dato principal de cada plazo; la previsión central lo acompaña, atenuada
-const rango = (p) => `${numero(p.bajo, 0)}–${numero(p.alto, 0)} $`;
-const centro = (p) => `centro ${dolar.format(p.previsto)} (${conSigno(p.variacion)} %)`;
 // Días naturales desde una fecha hasta hoy (negativo si aún no ha llegado)
 const diasDesde = (iso) => Math.round((Date.now() - ms(iso)) / 864e5);
 const $ = (id) => document.getElementById(id);
@@ -57,6 +54,12 @@ const alVer = new IntersectionObserver((entradas) => {
 }, { threshold: 0.12 });
 document.querySelectorAll('.rev').forEach((el) => alVer.observe(el));
 
+// Menú del móvil: el botón despliega las secciones y, al elegir una, se pliega
+$('menu').addEventListener('click', (e) => {
+  e.currentTarget.setAttribute('aria-expanded', String(e.currentTarget.getAttribute('aria-expanded') !== 'true'));
+});
+$('secciones').addEventListener('click', () => $('menu').setAttribute('aria-expanded', 'false'));
+
 // La barra subraya la sección que se está leyendo
 const espia = new IntersectionObserver((entradas) => {
   for (const e of entradas) {
@@ -67,8 +70,9 @@ const espia = new IntersectionObserver((entradas) => {
 }, { rootMargin: '-40% 0px -55% 0px' });
 document.querySelectorAll('main section[id]').forEach((s) => espia.observe(s));
 
-// $avance (0 a 1) es cuánto del gráfico se ve: las líneas se descubren de izquierda a
-// derecha y las barras crecen desde su base. Las anotaciones van dentro: aparecen a su paso.
+// $avance (0 a 1) es cuánto del gráfico se ve: se descubre de izquierda a derecha, con sus
+// anotaciones. Así lo que asoma es siempre el dato real: una barra que crece marca, mientras
+// crece, valores que no son.
 if (window.Chart) {
   Chart.defaults.font.family = color('--f-mono');
   Chart.defaults.font.size = 11;
@@ -78,16 +82,9 @@ if (window.Chart) {
       const { ctx, chartArea: a } = g, k = g.$avance ?? 1;
       ctx.save();
       if (k >= 1) return;
-      if (g.config.type === 'bar') {
-        const suelo = g.scales.y.getPixelForValue(0);
-        ctx.translate(0, suelo);
-        ctx.scale(1, k);
-        ctx.translate(0, -suelo);
-      } else {
-        ctx.beginPath();
-        ctx.rect(0, 0, a.left + a.width * k, g.height);
-        ctx.clip();
-      }
+      ctx.beginPath();
+      ctx.rect(0, 0, a.left + a.width * k, g.height);
+      ctx.clip();
     },
     afterDatasetsDraw(g) { g.ctx.restore(); },
   });
@@ -104,7 +101,8 @@ function esperar(g) {
 
 function dibujar(g) {
   if (!g) return;       // se destruyó antes de llegar a verse
-  const lienzo = g.canvas, inicio = performance.now(), dura = g.config.type === 'bar' ? 900 : 1500;
+  // Medio segundo: con más, el gráfico se queda un rato a medias
+  const lienzo = g.canvas, inicio = performance.now(), dura = 500;
   const paso = (ahora) => {
     if (Chart.getChart(lienzo) !== g) return;     // lo sustituyó otro (cambio de plazo)
     g.$avance = frenar(Math.min(Math.max((ahora - inicio) / dura, 0), 1));
@@ -157,41 +155,43 @@ function textos(p) {
   return { que, fiar, riesgos: RIESGOS[p.horizonte] };
 }
 
+// Hay dos selectores (.horizontes), el de la previsión y el de «¿Acierta?»: eligen el mismo plazo,
+// y cada uno dice en data-panel qué panel gobierna
 function pestanas() {
-  const lista = $('pestanas');
-  lista.innerHTML = '';
-  datos.prevision.forEach((p, i) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.role = 'tab';
-    b.id = `pestana-${p.horizonte}`;
-    b.innerHTML = '<span class="h-nombre etq"></span><span class="h-rango"></span><span class="h-centro centro"></span>';
-    b.querySelector('.h-nombre').textContent = `A ${p.nombre}`;
-    b.querySelector('.h-rango').textContent = rango(p);
-    b.querySelector('.h-centro').textContent = centro(p);
-    b.setAttribute('aria-controls', 'panel-prevision');
-    b.addEventListener('click', () => elegir(i));
-    lista.append(b);
-  });
-  // Flechas para moverse entre pestañas (patrón ARIA de pestañas)
-  lista.onkeydown = (e) => {
-    const paso = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-    if (!paso) return;
-    const n = datos.prevision.length;
-    elegir((actual + paso + n) % n);
-    lista.children[actual].focus();
-  };
+  for (const lista of document.querySelectorAll('.horizontes')) {
+    lista.innerHTML = '';
+    datos.prevision.forEach((p, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.role = 'tab';
+      b.id = `${lista.id}-${p.horizonte}`;
+      b.textContent = `A ${p.nombre}`;       // solo el nombre: las cifras están en la portada y en el panel
+      b.setAttribute('aria-controls', lista.dataset.panel);
+      b.addEventListener('click', () => elegir(i));
+      lista.append(b);
+    });
+    // Flechas para moverse entre pestañas (patrón ARIA de pestañas)
+    lista.onkeydown = (e) => {
+      const paso = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!paso) return;
+      const n = datos.prevision.length;
+      elegir((actual + paso + n) % n);
+      lista.children[actual].focus();
+    };
+  }
 }
 
 function elegir(i) {
   actual = i;
   const p = datos.prevision[i];
-  [...$('pestanas').children].forEach((b, j) => {
-    b.setAttribute('aria-selected', String(j === i));
-    b.tabIndex = j === i ? 0 : -1;
-  });
-  $('pestanas').style.setProperty('--i', i);      // el bloque de tinta se desliza a la pestaña elegida
-  $('panel-prevision').setAttribute('aria-labelledby', `pestana-${p.horizonte}`);
+  for (const lista of document.querySelectorAll('.horizontes')) {
+    [...lista.children].forEach((b, j) => {
+      b.setAttribute('aria-selected', String(j === i));
+      b.tabIndex = j === i ? 0 : -1;
+    });
+    lista.style.setProperty('--i', i);      // el bloque de tinta se desliza a la pestaña elegida
+    $(lista.dataset.panel).setAttribute('aria-labelledby', `${lista.id}-${p.horizonte}`);
+  }
   $('p-cuando').textContent = `Rango habitual a ${p.nombre} · ${fechaLarga(p.fecha_objetivo)}` +
     (diasDesde(p.fecha_objetivo) < 0 ? '' : ' (ya ha llegado)');
   contar($('p-bajo'), p.bajo, (v) => `${numero(v, 0)}–`);
@@ -210,12 +210,28 @@ function elegir(i) {
   graficoTest(p);
 }
 
-function ejes(el, minX, maxX, formato) {
+// Marcas del eje de fechas: en inicios de mes (cada 1, 2, 3 o 6) o de año (cada 1, 2 o 5), según lo
+// que abarque el gráfico. Así caen en fechas redondas y a intervalos iguales, no donde parta el eje.
+function marcasFecha(minX, maxX) {
+  const meses = (maxX - minX) / (30.44 * 864e5);
+  const paso = [1, 2, 3, 6, 12, 24, 60].find((p) => meses / p <= 8) ?? 120;
+  const mes = (x) => new Date(x).getFullYear() * 12 + new Date(x).getMonth();     // meses desde el año 0
+  const marcas = [];
+  for (let m = mes(minX); m <= mes(maxX); m++) {
+    const x = new Date(Math.floor(m / 12), m % 12, 1).getTime();
+    if (x >= minX && m % paso === 0) marcas.push(x);
+  }
+  return { marcas, formato: paso < 12 ? { month: 'short', year: '2-digit' } : { year: 'numeric' } };
+}
+
+function ejes(el, minX, maxX) {
   const borde = color('--borde', el);
   const ticks = { color: color('--texto-suave', el) };
+  const { marcas, formato } = marcasFecha(minX, maxX);
   return {
     x: { type: 'linear', min: minX, max: maxX, grid: { display: false }, border: { color: borde },
-         ticks: { ...ticks, maxTicksLimit: 7, callback: (v) => new Date(v).toLocaleDateString('es-ES', formato) } },
+         afterBuildTicks: (eje) => { eje.ticks = marcas.map((value) => ({ value })); },
+         ticks: { ...ticks, maxRotation: 0, callback: (v) => new Date(v).toLocaleDateString('es-ES', formato) } },
     y: { grid: { color: borde }, border: { display: false }, ticks: { ...ticks, callback: (v) => `${v} $` } },
   };
 }
@@ -261,7 +277,7 @@ function graficoPrevision(p) {
   graficos.prevision?.destroy();
   graficos.prevision = esperar(new Chart(lienzo, {
     type: 'line', data: { datasets: conjuntos },
-    options: base(lienzo, ejes(lienzo, real[0].x, fin + (fin - hoy) * 0.04, { month: 'short', year: '2-digit' })),
+    options: base(lienzo, ejes(lienzo, real[0].x, fin + (fin - hoy) * 0.04)),
   }));
   lienzo.setAttribute('aria-label',
     `Precio reciente del Brent, de ${dolar.format(real[0].y)} a ${dolar.format(p.precio_hoy)}, y previsión a ${p.nombre} ` +
@@ -284,7 +300,7 @@ function graficoCiclo() {
     type: 'line',
     data: { datasets: [{ label: 'Brent', data: serie, borderColor: c('--texto'), borderWidth: 1.25, pointRadius: 0,
       fill: 'origin', backgroundColor: c('--tenue') }] },
-    options: base(lienzo, ejes(lienzo, serie[0].x, serie.at(-1).x, { year: 'numeric' }),
+    options: base(lienzo, ejes(lienzo, serie[0].x, serie.at(-1).x),
       { annotation: { annotations: { ...marcas, ...numeros } } }),
   }));
 }
@@ -311,10 +327,10 @@ function resumen() {
     a.href = '#prevision';
     a.innerHTML = '<span class="etq"></span><b></b><span></span><span class="centro"></span>';
     a.children[0].textContent = `Rango a ${p.nombre}`;
-    a.children[1].textContent = rango(p);
+    a.children[1].textContent = `${numero(p.bajo, 0)}–${numero(p.alto, 0)} $`;
     a.children[2].className = `fiabilidad ${p.fiabilidad}`;     // justo bajo el rango: es lo que no debe perderse
     a.children[2].textContent = p.etiqueta;
-    a.children[3].textContent = centro(p);
+    a.children[3].textContent = `centro ${dolar.format(p.previsto)} (${conSigno(p.variacion)} %)`;
     a.addEventListener('click', () => elegir(i));
     caja.append(a);
   });
@@ -326,7 +342,7 @@ function graficoTest(p) {
   if (!t) return;
   const punto = (k) => t.serie.map((f) => ({ x: ms(f[0]), y: f[k] }));
   $('a-intro').textContent = `Modelo ${t.red} a ${p.nombre}, probado en 2021–2026 con datos que no vio al entrenarse ` +
-    '(modelos del estudio). Cambia de plazo arriba para ver los otros dos.';
+    '(modelos del estudio).';
   const lienzo = $('g-test'), c = (nombre) => color(nombre, lienzo);
   graficos.test?.destroy();
   graficos.test = esperar(new Chart(lienzo, {
@@ -338,7 +354,7 @@ function graficoTest(p) {
       { label: 'Previsión', data: punto(2), borderColor: c('--serie-2'), borderWidth: 1.75, pointRadius: 0 },
       { label: 'Precio real', data: punto(1), borderColor: c('--texto'), borderWidth: 1.75, pointRadius: 0 },
     ] },
-    options: base(lienzo, ejes(lienzo, ms(t.serie[0][0]), ms(t.serie.at(-1)[0]), { year: 'numeric' })),
+    options: base(lienzo, ejes(lienzo, ms(t.serie[0][0]), ms(t.serie.at(-1)[0]))),
   }));
   const anios = t.por_anio.map((a) => String(a.anio));
   // Sin color, la barra dice si ese año cumplió: en tinta si sí, en gris si no
@@ -431,7 +447,8 @@ function pesas() {
   }
   const eje = document.createElement('div');
   eje.className = 'pesas-eje';
-  eje.innerHTML = `<span></span><div><span>${min} %</span><span>+${max} %</span></div><span></span>`;
+  eje.innerHTML = `<span></span><div><span>${conSigno(min, 0)} %</span><span class="cero">0</span><span>${conSigno(max, 0)} %</span></div><span></span>`;
+  eje.querySelector('.cero').style.left = `${x(0)}%`;      // bajo la línea vertical del cero
   $('pesas').append(eje);
 }
 
@@ -464,7 +481,7 @@ function tabla() {
     for (const f of datos.comparativa.filter((f) => f.horizonte === h && redes[f.modelo])) {
       const ingenuo = f.modelo === 'ingenuo';
       html += `<tr class="${f.elegido_app ? 'elegido' : ''}">
-        <th scope="row">${redes[f.modelo]}${f.elegido_app ? '<span class="marca-app">EN LA APP</span>' : ''}</th>
+        <th scope="row">${redes[f.modelo]}${f.elegido_app ? ' <span class="marca-app">EN LA APP</span>' : ''}</th>
         <td>${ingenuo ? 'referencia' : pct(f.mejora_val)}</td><td>${ingenuo ? 'referencia' : pct(f['mejora_test_%'])}</td>
         <td>${dolar.format(f['mae_$'])}</td><td>${dolar.format(f['rmse_$'])}</td>
         <td>${numero(f.cobertura_test * 100, 0)} %</td>
@@ -484,7 +501,7 @@ function pintar() {
   $('vivo').textContent = `Brent ${dolar.format(p0.precio_hoy)} · ${new Date(ms(p0.fecha_hoy)).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
   resumen();
   graficoPortada();
-  pestanas();      // se rehace: las celdas muestran la previsión de cada plazo
+  pestanas();
   elegir(actual);
   graficoCiclo();
 }

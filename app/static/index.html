@@ -22,7 +22,8 @@
   <header class="barra oscura">
     <div class="contenedor nav">
       <a class="marca" href="#"><span class="marca-signo" aria-hidden="true"></span>Brent <span>Previsión</span></a>
-      <nav aria-label="Principal">
+      <button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="secciones">Menú</button>
+      <nav id="secciones" aria-label="Principal">
         <ul>
           <li><a href="#prevision">Previsión</a></li>
           <li><a href="#acierta">¿Acierta?</a></li>
@@ -61,8 +62,6 @@
           </svg>
           <span class="pulso" id="pulso"></span>
         </figure>
-      </div>
-      <div class="contenedor">
         <div class="resumen cifras entra" style="--d:10" id="resumen">
           <div>
             <span class="etq">Último precio publicado</span><b id="precio-hoy">—</b>
@@ -79,7 +78,7 @@
           <p class="antetitulo"><span>01</span>Previsión</p>
           <h2 id="t-prevision">Elige el plazo</h2>
         </header>
-        <div class="horizontes rev" role="tablist" aria-label="Horizonte de la previsión" id="pestanas"></div>
+        <div class="horizontes rev" role="tablist" aria-label="Horizonte de la previsión" id="pestanas" data-panel="panel-prevision"></div>
 
         <div class="prevision marco rev" id="panel-prevision" role="tabpanel" tabindex="0">
           <div class="panel">
@@ -116,6 +115,8 @@
           <h2 id="t-acierta">Cómo le fue con datos que no había visto</h2>
           <p class="suave" id="a-intro"></p>
         </header>
+        <div class="horizontes rev" role="tablist" aria-label="Plazo de la prueba" id="pestanas-test" data-panel="panel-test"></div>
+        <div id="panel-test" role="tabpanel" tabindex="0">
         <div class="marco grafico rev">
           <div class="lienzo alto"><canvas id="g-test" role="img" aria-label="Precio real frente a la previsión en 2021–2026"></canvas></div>
           <div class="leyenda" aria-hidden="true">
@@ -135,6 +136,7 @@
             <div class="lienzo bajo"><canvas id="g-cobertura" role="img" aria-label="Acierto del rango por año"></canvas></div>
             <div class="leyenda" aria-hidden="true"><span class="l-si">Cumple el 80 %</span><span class="l-no">Se queda corto</span></div>
           </div>
+        </div>
         </div>
       </div>
     </section>
@@ -156,7 +158,7 @@
     <section id="comparativa" aria-labelledby="t-comparativa">
       <div class="contenedor">
         <header class="cabecera rev">
-          <p class="antetitulo"><span>04</span>Los modelos</p>
+          <p class="antetitulo"><span>04</span>Comparativa</p>
           <h2 id="t-comparativa">RNN, LSTM y GRU: cuál se usa y por qué</h2>
           <p class="suave">Mismos datos, misma ventana de 60 días y la misma búsqueda de hiperparámetros para las tres.
             El modelo de cada plazo se eligió por su error en validación (2012–2020), antes de mirar el test (2021–2026).
@@ -211,6 +213,9 @@
 
   <footer class="oscura">
     <div class="contenedor">
+      <p><b>Judith Salas</b> · Caso de uso III de Aprendizaje automático ·
+        <a href="https://github.com/judithsalas/oil_price_prediction_case02">Código en GitHub</a> ·
+        <a href="https://github.com/judithsalas/oil_price_prediction_case02/blob/main/docs/decisiones.md">Metodología y decisiones</a></p>
       <p>Datos: Brent y WTI de la EIA, tipos de cambio, tipo del BCE y VIX vía FRED; futuros, cobre, oro e índice
         del dólar de Yahoo Finance. Modelos RNN, LSTM y GRU en PyTorch.</p>
       <p>Herramienta educativa de apoyo a decisiones. No es asesoramiento financiero.</p>
