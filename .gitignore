@@ -229,6 +229,7 @@ data/
 AGENTS.md
 CLAUDE.md
 GEMINI.md
+DESIGN.md
 .claude/
 graphify-out/
 

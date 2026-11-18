@@ -9,7 +9,6 @@ en lenguaje sencillo.
 - **App:** <https://prevision-brent.vercel.app> (ver [Despliegue](#despliegue))
 - **Modelos:** <https://huggingface.co/judithsalas/prevision-brent>
 - **Todas las decisiones, con su justificación:** [`docs/decisiones.md`](docs/decisiones.md)
-- **Diseño de la app:** [`DESIGN.md`](DESIGN.md)
 
 ## Resultado en una tabla
 

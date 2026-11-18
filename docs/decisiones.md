@@ -449,7 +449,8 @@ queda como mejora posible.
 
 ## La app (`app/`, `scripts/exportar_web.py`)
 
-El diseño visual está en `DESIGN.md`. Aquí van las decisiones de fondo.
+El diseño visual vive en los tokens de `app/static/estilos.css` (variables CSS). Aquí
+van las decisiones de fondo.
 
 ### Una página, dos formas de servirla
 

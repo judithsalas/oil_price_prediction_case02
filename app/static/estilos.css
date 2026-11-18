@@ -1,4 +1,4 @@
-/* Tokens: ver DESIGN.md. Las reglas usan los nombres, nunca valores sueltos. */
+/* Tokens de diseño. Las reglas usan los nombres, nunca valores sueltos. */
 :root {
   /* Tinta sobre papel: blanco, negro y grises. El color queda solo para la fiabilidad de la previsión */
   --fondo: #FFFFFF; --fondo-2: #F4F4F5; --superficie: #FFFFFF; --borde: #E1E1E4;
