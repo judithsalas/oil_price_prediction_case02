@@ -205,8 +205,9 @@ máximo de 100. Los gradientes se limitan a norma 1 para que la RNN simple no
 "explote" (cota de BPTT, diapositiva 4).
 
 Con paciencia 10 las curvas siguen al menos 10 épocas después del mínimo, así que
-siempre se ve dónde está y cómo la validación empieza a subir. La diferencia entre
-train y validación en la mejor época se guarda en la columna `brecha`.
+siempre se ve dónde está y cómo la curva de `parada` (en las gráficas, "validación
+(parada)") empieza a subir. La diferencia entre esa curva y la de train en la mejor
+época se guarda en la columna `brecha`.
 
 ### Modelo final
 
@@ -250,7 +251,7 @@ mejor combinación de cada red (predicción media de las 3 semillas en v2–v4; 
 las semillas en v1). Los CSV y figuras de cada uno están en `docs/resultados/<carpeta>`
 y `docs/figuras/<carpeta>` (v4 en la raíz).
 
-| Exp. | Cambio | 5 días (RNN / LSTM / GRU) | 63 días | 252 días | Brecha train-val (63 / 252 d) |
+| Exp. | Cambio | 5 días (RNN / LSTM / GRU) | 63 días | 252 días | Brecha, mediana de la rejilla (63 / 252 d) |
 |---|---|---|---|---|---|
 | v1 `v1_niveles` | Precios en nivel, parada con val, paciencia 5 | +3,4 / +0,9 / +1,0 | +5,7 / +9,7 / +0,6 | −74 / −27 / −94 | 0,47 / 0,93 |
 | v2 `v2_completo` | Bloque completo + volatilidad y nivel | +0,3 / +2,0 / +1,6 | −3,1 / +7,3 / −0,6 | −49 / +0,5 / −42 | 0,05 / 0,13 |
@@ -261,12 +262,22 @@ y `docs/figuras/<carpeta>` (v4 en la raíz).
   resto no son del todo comparables.
 - v2 → v3 es el único experimento de un solo cambio, y decidió quitar las dos
   variables.
-- La brecha es la diferencia entre el error relativo de validación y el de train en
-  la mejor época. Con la regularización pasó de 0,5–0,9 a menos de 0,25.
+- La brecha es la diferencia, en la mejor época, entre el error relativo al ingenuo
+  del conjunto con el que se para (la validación en v1, la partición `parada` desde
+  v2) y el de train. La columna es la mediana de todos los entrenamientos de la
+  rejilla: bajó de 0,47 / 0,93 en v1 a entre 0,03 y 0,23 desde v2. Entre v1 y v2
+  cambiaron varias cosas a la vez, así que la bajada no se puede atribuir a una sola.
+- La mediana no lo cuenta todo. A 252 días, uno de cada cuatro entrenamientos de la
+  rejilla final pasa de 0,64. En los modelos finales (`entrenamiento_final.csv`) la
+  brecha va de 0,02 a 0,22 a 5 días, de 0,02 a 0,21 en la RNN y la GRU a 63 días y
+  de 0,18 a 0,61 a 252 días. La LSTM a 63 días, la elegida para la app, es la que
+  más memoriza: de 0,55 a 0,88, con un error en train de entre el 10 % y el 44 % del
+  ingenuo y en `parada` igual al del ingenuo. Es el modelo que pasa de +12,9 % en
+  validación a −26 % en test.
 - La mejor época sigue llegando pronto (mediana 3–4; un 29 % en la época 1): con
   rentabilidades del petróleo la señal es muy débil y la red empieza a memorizar
   ruido enseguida. Con paciencia 10 las curvas siguen al menos 10 épocas más, así
-  que el mínimo se ve y se ve cómo la validación sube después.
+  que el mínimo se ve y se ve cómo el error de `parada` sube después.
 
 ### Modelos finales (`models/final/`)
 
@@ -305,8 +316,12 @@ año en `test_por_anio.csv` y `docs/figuras/test_por_anio.png`.
 - A 252 días todas pierden; el modelo más simple (Ridge) es el que menos pierde. En
   2023–2024 las redes predijeron una vuelta al alza tras la bajada de 2022 que no
   llegó.
-- El acierto de dirección ronda el 50 % en todos: no saben si el precio subirá o
-  bajará.
+- A 5 y 63 días el acierto de dirección ronda el 50 % (las redes, entre el 47 % y el
+  53 %; Ridge, 51 % y 57 %): no saben si el precio subirá o bajará. A 252 días es
+  peor: Ridge y la RNN se quedan en el 50 % y el 49 %, la GRU en el 42 % y la LSTM en
+  el 31 %. Las tres redes fallaron los dos giros: con origen en 2021 previeron una
+  bajada la mayoría de los días y el precio subió; con origen en 2022 previeron una
+  subida y bajó.
 
 ### Diebold-Mariano: cuánto fiarse del p-valor
 
@@ -525,5 +540,5 @@ días) pero no en test, donde la LSTM es la que más sobreajusta: tiene más par
 - **A 252 días hay muy pocos datos independientes**: unos 18 años de train y 5 de
   test. Ninguna conclusión a 1 año es estadísticamente sólida.
 - **Batir al ingenuo no es ganar dinero.** Para invertir habría que batir al precio
-  de los futuros, después de comisiones; con un acierto de dirección del 50 % no hay
-  estrategia posible.
+  de los futuros, después de comisiones; con un acierto de dirección del 50 % o
+  menos no hay estrategia posible.
