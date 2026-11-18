@@ -84,8 +84,9 @@ Funciona de dos formas con la misma página ([`app/static/`](app/static)):
 - **En Hugging Face (estática):** la página lee `datos.json`, que GitHub Actions
   ([`.github/workflows/web.yml`](.github/workflows/web.yml)) regenera cada día laborable con
   datos nuevos. El día 1 de cada mes, además, reentrena los modelos elegidos con todos los
-  datos hasta ese día. También se puede lanzar a mano desde la pestaña *Actions* de GitHub
-  (*Web del Space* → *Run workflow*, con o sin "reentrenar").
+  datos hasta ese día. Cada push a `main` también publica la web, con el código nuevo. Y se
+  puede lanzar a mano desde la pestaña *Actions* de GitHub (*Web del Space* → *Run workflow*,
+  con o sin "reentrenar").
 - **En local (con servidor):** `poetry run uvicorn app.servidor:app --port 7860`. Añade
   botones para **descargar datos nuevos** y **reentrenar** desde la propia página. Guarda las
   descargas en `data/app_dataset.csv`, sin tocar el dataset del estudio, y los modelos en
@@ -127,7 +128,7 @@ petroleo/         código del estudio
   graficas.py       curvas de aprendizaje, rejilla y test
 scripts/          los pasos 1 a 5 y la exportación de la web estática
 app/              la app web (lógica, servidor y página)
-.github/workflows/ actualización diaria de la web en Hugging Face
+.github/workflows/ publicación de la web en Hugging Face (en cada push y a diario)
 configs/          parámetros del experimento
 models/final/     los 9 modelos finales (3 redes × 3 horizontes, 3 semillas cada uno)
 docs/

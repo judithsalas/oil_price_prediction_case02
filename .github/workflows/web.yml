@@ -1,4 +1,5 @@
 # Mantiene al día la web estática del Space de Hugging Face.
+# - En cada push a main: sube la web con el código nuevo.
 # - Cada día laborable: descarga datos, recalcula la previsión y sube la web.
 # - El día 1 de cada mes (o a mano, marcando "reentrenar"): además reentrena.
 # Los modelos reentrenados se guardan en el propio Space (models/app/) y se
@@ -6,6 +7,8 @@
 name: Web del Space
 
 on:
+  push:
+    branches: [main]          # sin filtro de rutas: casi todo el repositorio acaba en la web
   schedule:
     - cron: '0 7 * * 1-5'     # días laborables, 07:00 UTC
     - cron: '0 8 1 * *'       # día 1 de cada mes: reentrenar
