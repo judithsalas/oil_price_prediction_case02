@@ -6,8 +6,10 @@
 #  Fuente general: portal FRED (EIA, BCE, Fed, Cboe), gratis y sin clave
 #  Complementaria: Yahoo Finance (futuros y mercados mundiales)
 # =============================================================
+import time
 from datetime import datetime
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pandas as pd
 
@@ -31,8 +33,16 @@ SERIES_FRED = {
 def descargar_fred(serie, fin):
     url = (f'https://fred.stlouisfed.org/graph/fredgraph.csv'
            f'?id={serie}&cosd={INICIO}&coed={fin}')
-    s = pd.read_csv(url, index_col=0, parse_dates=True, na_values='.').iloc[:, 0]
-    return s.rename(SERIES_FRED[serie])
+    # FRED devuelve a ratos un error pasajero del servidor (502): se reintenta antes de rendirse
+    for espera in (5, 15, 30, None):
+        try:
+            s = pd.read_csv(url, index_col=0, parse_dates=True, na_values='.').iloc[:, 0]
+            return s.rename(SERIES_FRED[serie])
+        except HTTPError as e:
+            if espera is None or e.code < 500:      # un 404 (serie mal escrita) no se arregla esperando
+                raise
+            print(f'  FRED respondió {e.code} con {serie}; reintento en {espera} s')
+            time.sleep(espera)
 
 
 # ---------------------------------------------------------------
