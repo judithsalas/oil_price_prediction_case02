@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import torch
 import yaml
+from sklearn.metrics import r2_score
 
 from petroleo.modelos import TIPOS
 from scripts.entrenar import media_semillas
@@ -43,15 +44,23 @@ def intervalos(cfg, pred):
     return pd.DataFrame(filas)
 
 
+def errores_en_dolares(real, previsto):
+    """Las cuatro métricas clásicas sobre el precio: MAE, MSE, RMSE y R².
+    R² = 1 es acertar siempre y R² = 0, hacerlo igual que prever siempre la media del
+    periodo; por debajo de 0, peor que esa media."""
+    error = previsto - real
+    mse = (error ** 2).mean()
+    return {'mae_$': error.abs().mean(), 'mse_$2': mse, 'rmse_$': np.sqrt(mse), 'r2': r2_score(real, previsto)}
+
+
 def comparativa(rangos, pred, hp_cols):
     test = pd.read_csv(RESULTADOS / 'test.csv')
     precios = pd.read_csv(RESULTADOS / 'test_predicciones.csv')
     filas = []
     for (nombre_h, modelo), _ in test.groupby(['horizonte', 'modelo'], sort=False):
         p = precios[precios['horizonte'] == nombre_h]
-        error = p[f'precio_{modelo}'] - p['precio_real']
         fila = {'horizonte': nombre_h, 'modelo': modelo,
-                'mae_$': error.abs().mean(), 'rmse_$': np.sqrt((error ** 2).mean())}
+                **errores_en_dolares(p['precio_real'], p[f'precio_{modelo}'])}
         rango = rangos[(rangos['horizonte'] == nombre_h) & (rangos['modelo'] == modelo)]
         if len(rango):
             # ¿El precio real cae dentro del intervalo? log(real / previsto) entre bajo y alto

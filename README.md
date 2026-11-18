@@ -15,15 +15,17 @@ en lenguaje sencillo.
 Mejora del error frente al ingenuo (en positivo, mejor que el precio de hoy). La validación
 es walk-forward 2012–2020 y el test es 2021–2026, evaluado una sola vez.
 
-| Horizonte | Modelo de la app (elegido en validación) | Validación | Test | Rango del 80 %: aciertos en test |
-|---|---|---|---|---|
-| 1 semana | GRU | +1,5 % | −2,0 % | 71 % |
-| 3 meses | LSTM | +12,9 % | −26 % | 74 % |
-| 1 año | LSTM | +6,5 % | −55 % | 52 % |
+| Horizonte | Modelo de la app (elegido en validación) | Validación | Test | R² en test (red / ingenuo) | Rango del 80 %: aciertos en test |
+|---|---|---|---|---|---|
+| 1 semana | GRU | +1,5 % | −2,0 % | 0,88 / 0,88 | 71 % |
+| 3 meses | LSTM | +12,9 % | −26 % | −0,60 / −0,19 | 74 % |
+| 1 año | LSTM | +6,5 % | −55 % | −2,93 / −1,46 | 52 % |
 
 **Ninguna red bate al ingenuo en test**, igual que en los repositorios de referencia. Lo que
-la app aporta es el rango de incertidumbre y saber cuánto fiarse en cada horizonte. La tabla
-completa (MAE, RMSE, parámetros y tiempo de las tres redes) está en
+la app aporta es el rango de incertidumbre y saber cuánto fiarse en cada horizonte. El R² de
+0,88 a 1 semana es igual al del ingenuo: mide que el precio cambia poco en una semana, no que
+la red acierte. La tabla completa (R², MAE, MSE, RMSE, parámetros y tiempo de las tres redes)
+está en
 [`docs/resultados/comparativa.csv`](docs/resultados/comparativa.csv) y en la propia app.
 
 ![Mejora frente al ingenuo de cada red en validación y en test](docs/figuras/validacion_vs_test.png)

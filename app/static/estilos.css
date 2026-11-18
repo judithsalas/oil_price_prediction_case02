@@ -202,8 +202,9 @@ section + section { border-top: 1px solid var(--borde); }
 .pesas-eje div { position: relative; display: flex; justify-content: space-between; }
 .pesas-eje .cero { position: absolute; transform: translateX(-50%); }
 .tabla-envoltura { overflow-x: auto; }
+.tabla-envoltura + p { margin-top: var(--e-3); }
 table { width: 100%; border-collapse: collapse; font: 400 var(--t-pequeno)/1.4 var(--f-mono); font-variant-numeric: tabular-nums; }
-th, td { text-align: right; padding: var(--e-3) var(--e-4); border-bottom: 1px solid var(--borde); white-space: nowrap; }
+th, td { text-align: right; padding: var(--e-3); border-bottom: 1px solid var(--borde); white-space: nowrap; }
 th:first-child, td:first-child { text-align: left; }
 thead th { font-size: var(--t-micro); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-suave); border-bottom-color: var(--texto); white-space: normal; }
 tbody th { font-family: var(--f-texto); font-weight: 500; }
@@ -230,25 +231,16 @@ footer p + p { margin-top: var(--e-2); }
 .js .rev.visto { opacity: 1; transform: none; }
 .js .rev :is(.esquema-barra, .pesa-pista) { clip-path: inset(-6px 100% -6px 0); transition: clip-path .5s var(--salida) calc(var(--d, 0) * 20ms); }
 .js .rev.visto :is(.esquema-barra, .pesa-pista) { clip-path: inset(-6px -8px); }
-/* Al imprimir no hay scroll que descubra nada: todo en su estado final (los gráficos, desde app.js) */
-@media print {
-  /* Con fondos: sin ellos se pierden las secciones negras, las barras del esquema y las líneas claras de sus gráficos */
-  :root { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .js .rev { opacity: 1; transform: none; }
-  .js .rev :is(.esquema-barra, .pesa-pista) { clip-path: none; }
-  /* Chart.js deja el lienzo con el ancho de la pantalla: que encoja con la hoja en vez de salirse */
-  canvas { max-width: 100%; height: auto !important; }
-  .lienzo { height: auto !important; }
-  th, td { white-space: normal; padding: var(--e-2); }      /* la tabla no puede desplazarse en papel: que quepa */
-  .cabecera, .marco, .eventos li { break-inside: avoid; }
-}
 
+/* La tabla no se corta: según se estrecha la pantalla deja primero parámetros y entrenamiento... */
+@media (max-width: 1100px) {
+  .c-coste { display: none; }
+}
 @media (max-width: 900px) {
   .vivo { display: none; }
   .portada-rejilla, .prevision, .columnas, .dos, .eventos { grid-template-columns: minmax(0, 1fr); }
   .portada-grafico { order: 1; }      /* en una columna: la pregunta, los rangos y, después, el gráfico */
-  /* La tabla no se corta: según se estrecha la pantalla deja primero parámetros y entrenamiento... */
-  table :is(th, td):nth-child(n+7) { display: none; }
+  .c-error { display: none; }      /* ...después MAE, MSE y RMSE... */
   .columnas { gap: var(--e-5); }
   .panel { border-right: 0; border-bottom: 1px solid var(--borde); }
   .resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -264,7 +256,7 @@ footer p + p { margin-top: var(--e-2); }
   .nav ul { flex-direction: column; gap: 0; padding: var(--e-2) var(--e-4) var(--e-4); font-size: 1rem; }
   .nav ul a { padding: var(--e-3) 0; }
   .nav ul a::after { display: none; }
-  table :is(th, td):is(:nth-child(4), :nth-child(5)) { display: none; }     /* ...y después MAE y RMSE */
+  .c-validacion { display: none; }      /* ...y en móvil la mejora en validación: quedan modelo, mejora en test, R² y acierto */
 }
 @media (max-width: 600px) {
   .contenedor { padding: 0 var(--e-4); }
@@ -285,4 +277,22 @@ footer p + p { margin-top: var(--e-2); }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;
     transition-duration: 1ms !important; transition-delay: 0s !important; }
+}
+/* Al imprimir no hay scroll que descubra nada: todo en su estado final (los gráficos, desde app.js).
+   Va al final del archivo para mandar sobre las reglas de anchura, que en una hoja también se cumplen. */
+@media print {
+  /* Con fondos: sin ellos se pierden las secciones negras, las barras del esquema y las líneas claras de sus gráficos */
+  :root { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .js .rev { opacity: 1; transform: none; }
+  .js .rev :is(.esquema-barra, .pesa-pista) { clip-path: none; }
+  /* Chart.js deja el lienzo con el ancho de la pantalla: que encoja con la hoja en vez de salirse */
+  canvas { max-width: 100%; height: auto !important; }
+  .lienzo { height: auto !important; }
+  /* La tabla no puede desplazarse en papel: que quepa, con las cuatro métricas aunque la hoja sea estrecha */
+  table { font-size: var(--t-micro); }
+  th, td { padding: var(--e-2) var(--e-1); }
+  th { white-space: normal; }       /* las cifras, en una línea; los rótulos pueden partirse */
+  .c-error, .c-validacion { display: table-cell; }
+  .c-coste { display: none; }
+  .cabecera, .marco, .eventos li { break-inside: avoid; }
 }

@@ -93,10 +93,11 @@ líneas de 1 px (`--borde`, o `--texto` cuando encabezan una columna).
 - **Marco (`.marco`):** `--superficie` con borde `--borde`, para gráficos, bloques y tabla.
 - **Columnas (`.columnas`):** tres textos, cada uno bajo una línea de tinta.
 - **Tabla:** cifras en mono, cabecera en mayúsculas, fila del modelo de la app en
-  `--tenue` con la etiqueta «EN LA APP». Nunca se corta ni se desplaza de lado: por debajo
-  de 900 px deja las columnas de parámetros y entrenamiento, y por debajo de 720 px
-  también MAE y RMSE; quedan modelo, mejora en validación, mejora en test y acierto del
-  rango.
+  `--tenue` con la etiqueta «EN LA APP». Lleva las cuatro métricas clásicas (R², MAE, MSE
+  y RMSE) y, debajo, una nota que explica cómo leer el R². Nunca se corta ni se desplaza
+  de lado: por debajo de 1100 px deja parámetros y entrenamiento; por debajo de 900 px,
+  MAE, MSE y RMSE; por debajo de 720 px, la mejora en validación. En móvil quedan modelo,
+  mejora en test, R² y acierto del rango.
 - **Pie:** firma (nombre, asignatura, enlaces al código y a la metodología), fuentes de
   datos y aviso de que no es asesoramiento financiero.
 

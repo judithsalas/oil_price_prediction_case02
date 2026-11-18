@@ -472,20 +472,27 @@ function tabla() {
   const nombres = { corto: '1 semana', medio: '3 meses', largo: '1 año' };
   const redes = { ingenuo: 'Precio de hoy (ingenuo)', rnn: 'RNN simple', lstm: 'LSTM', gru: 'GRU' };
   const pct = (v) => (v == null ? '—' : `${conSigno(v)} %`);
-  let html = `<caption class="oculto">MAE, RMSE, mejora frente al ingenuo, parámetros y tiempo de entrenamiento por red y horizonte</caption>
-    <thead><tr><th scope="col">Modelo</th><th scope="col">Mejora validación</th><th scope="col">Mejora test</th>
-    <th scope="col">MAE test</th><th scope="col">RMSE test</th><th scope="col">Acierto del rango</th>
-    <th scope="col">Parámetros</th><th scope="col">Entrenamiento</th></tr></thead><tbody>`;
+  // Cada columna: título, clase (en estilos.css decide por debajo de qué anchura se deja de ver)
+  // y valor de la celda; `ingenuo` dice si la fila es la del precio de hoy
+  const columnas = [
+    ['Mejora validación', 'c-validacion', (f, ingenuo) => (ingenuo ? 'referencia' : pct(f.mejora_val))],
+    ['Mejora test', '', (f, ingenuo) => (ingenuo ? 'referencia' : pct(f['mejora_test_%']))],
+    ['R² test', '', (f) => conSigno(f.r2, 2).replace('+', '')],
+    ['MAE test', 'c-error', (f) => dolar.format(f['mae_$'])],
+    ['MSE test', 'c-error', (f) => `${numero(f['mse_$2'], 1)} $²`],
+    ['RMSE test', 'c-error', (f) => dolar.format(f['rmse_$'])],
+    ['Acierto del rango', '', (f) => `${numero(f.cobertura_test * 100, 0)} %`],
+    ['Parámetros', 'c-coste', (f, ingenuo) => (ingenuo ? '0' : numero(f.parametros, 0))],
+    ['Entrenamiento', 'c-coste', (f, ingenuo) => (ingenuo ? '—' : `${numero(f.segundos, 0)} s`)],
+  ];
+  let html = `<caption class="oculto">Mejora frente al ingenuo, R², MAE, MSE, RMSE, acierto del rango, parámetros y tiempo de entrenamiento por red y horizonte</caption>
+    <thead><tr><th scope="col">Modelo</th>${columnas.map(([titulo, clase]) => `<th scope="col" class="${clase}">${titulo}</th>`).join('')}</tr></thead><tbody>`;
   for (const h of Object.keys(nombres)) {
-    html += `<tr class="grupo"><th colspan="8" scope="colgroup">${nombres[h]}</th></tr>`;
+    html += `<tr class="grupo"><th colspan="${columnas.length + 1}" scope="colgroup">${nombres[h]}</th></tr>`;
     for (const f of datos.comparativa.filter((f) => f.horizonte === h && redes[f.modelo])) {
-      const ingenuo = f.modelo === 'ingenuo';
       html += `<tr class="${f.elegido_app ? 'elegido' : ''}">
         <th scope="row">${redes[f.modelo]}${f.elegido_app ? ' <span class="marca-app">EN LA APP</span>' : ''}</th>
-        <td>${ingenuo ? 'referencia' : pct(f.mejora_val)}</td><td>${ingenuo ? 'referencia' : pct(f['mejora_test_%'])}</td>
-        <td>${dolar.format(f['mae_$'])}</td><td>${dolar.format(f['rmse_$'])}</td>
-        <td>${numero(f.cobertura_test * 100, 0)} %</td>
-        <td>${ingenuo ? '0' : numero(f.parametros, 0)}</td><td>${ingenuo ? '—' : `${numero(f.segundos, 0)} s`}</td></tr>`;
+        ${columnas.map(([, clase, valor]) => `<td class="${clase}">${valor(f, f.modelo === 'ingenuo')}</td>`).join('')}</tr>`;
     }
   }
   $('tabla').innerHTML = html + '</tbody>';

@@ -321,7 +321,7 @@ p < 0,05 no basta para concluir nada.
 ### Tabla comparativa (`scripts/comparar.py`)
 
 `docs/resultados/comparativa.csv` junta, para cada red y horizonte, lo que pide el
-enunciado: MAE y RMSE en dólares, mejora frente al ingenuo (validación y test),
+enunciado: R², MAE, MSE y RMSE sobre el precio en dólares, mejora frente al ingenuo (validación y test),
 parámetros, tiempo de entrenamiento y estabilidad entre semillas. No vuelve a
 evaluar: lee las previsiones de test ya guardadas.
 
@@ -333,6 +333,27 @@ evaluar: lee las previsiones de test ya guardadas.
 | GRU | **+1,5** / +9,4 / −6,4 | −2,0 / +1,5 / −48 | 5,53 / 17,39 / 29,96 | 15.617 / 40.577 / 3.233 | 7–20 |
 
 Todas entrenan en segundos en CPU: el coste no decide nada.
+
+**R² y MSE en test**, sobre el precio en dólares. Se añadieron después, a partir de las
+mismas previsiones guardadas: no se volvió a evaluar ni cambió ninguna decisión.
+
+| | R² 5 / 63 / 252 d | MSE ($²) 5 / 63 / 252 d |
+|---|---|---|
+| Ingenuo | 0,88 / −0,19 / −1,46 | 30,2 / 292 / 642 |
+| RNN | 0,88 / −0,22 / −2,57 | 30,8 / 301 / 931 |
+| LSTM | 0,88 / −0,60 / −2,93 | 31,3 / 393 / 1.024 |
+| GRU | 0,88 / −0,23 / −2,44 | 30,6 / 302 / 897 |
+
+- R² = 1 − (error cuadrático de la previsión) / (error de prever siempre la media del
+  precio real en test). Vale 1 si acierta siempre, 0 si lo hace como esa media y es
+  negativo si lo hace peor.
+- **A 5 días el R² es 0,88 para las tres redes y también para el ingenuo.** Un R² alto
+  no demuestra aquí que la red prediga: mide que el precio de dentro de una semana se
+  parece al de hoy. Por eso la métrica para decidir es la mejora frente al ingenuo y no
+  el R².
+- **A 63 y 252 días el R² es negativo, también para el ingenuo.** En 2021–2026 el precio
+  se movió tanto que la media del periodo, que no se conoce de antemano, habría dado
+  menos error que cualquier previsión hecha con meses de antelación.
 
 ### Modelo de la app: se elige por validación
 
