@@ -514,7 +514,7 @@ function pintar() {
 }
 
 async function cargar() {
-  // Con servidor (en local) se pide la API; en el Space estático, datos.json,
+  // Con servidor (en local) se pide la API; en la web publicada, datos.json,
   // que genera GitHub Actions cada día (scripts/exportar_web.py)
   let r = await fetch('api/resumen').catch(() => null);
   const estatico = !r?.ok;

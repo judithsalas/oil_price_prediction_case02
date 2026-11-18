@@ -32,7 +32,7 @@ RUTA_APP = RUTA_CSV.with_name('app_dataset.csv')
 
 def leer_datos():
     ruta = next((r for r in (RUTA_APP, RUTA_CSV) if r.exists()), None)
-    if ruta is None:                    # en Hugging Face el repositorio no trae datos
+    if ruta is None:                    # en GitHub Actions el repositorio no trae datos
         actualizar_datos()
         ruta = RUTA_APP
     return pd.read_csv(ruta, index_col=0, parse_dates=True)

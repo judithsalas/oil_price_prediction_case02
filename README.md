@@ -6,7 +6,8 @@ entre sí y con el modelo ingenuo ("el precio futuro = el de hoy"). El modelo el
 horizonte se integra en una app web que da la previsión, su rango del 80 % y una explicación
 en lenguaje sencillo.
 
-- **App:** <https://huggingface.co/spaces/judithsalas/prevision-brent> (ver [Despliegue](#despliegue-en-hugging-face))
+- **App:** <https://prevision-brent.vercel.app> (ver [Despliegue](#despliegue))
+- **Modelos:** <https://huggingface.co/judithsalas/prevision-brent>
 - **Todas las decisiones, con su justificación:** [`docs/decisiones.md`](docs/decisiones.md)
 - **Diseño de la app:** [`DESIGN.md`](DESIGN.md)
 
@@ -84,11 +85,11 @@ poetry run python -m unittest
 
 Funciona de dos formas con la misma página ([`app/static/`](app/static)):
 
-- **En Hugging Face (estática):** la página lee `datos.json`, que GitHub Actions
+- **Publicada en Vercel (estática):** la página lee `datos.json`, que GitHub Actions
   ([`.github/workflows/web.yml`](.github/workflows/web.yml)) regenera cada día laborable con
   datos nuevos. El día 1 de cada mes, además, reentrena los modelos elegidos con todos los
   datos hasta ese día. Cada push a `main` también publica la web, con el código nuevo. Y se
-  puede lanzar a mano desde la pestaña *Actions* de GitHub (*Web del Space* → *Run workflow*,
+  puede lanzar a mano desde la pestaña *Actions* de GitHub (*Web y modelos* → *Run workflow*,
   con o sin "reentrenar").
 - **En local (con servidor):** `poetry run uvicorn app.servidor:app --port 7860`. Añade
   botones para **descargar datos nuevos** y **reentrenar** desde la propia página. Guarda las
@@ -99,40 +100,31 @@ La lógica es la misma en los dos casos ([`app/prevision.py`](app/prevision.py))
 [`app/servidor.py`](app/servidor.py) la expone con FastAPI y
 [`scripts/exportar_web.py`](scripts/exportar_web.py) la vuelca en `web/`.
 
-## Despliegue en Hugging Face
+## Despliegue
 
-Los Spaces estáticos son gratis (los de Docker exigen la suscripción PRO). Una sola vez, con
-tu usuario en lugar de `TU_USUARIO`:
+La web va a Vercel y los modelos a Hugging Face. Lo hace todo el workflow
+([`.github/workflows/web.yml`](.github/workflows/web.yml)); solo necesita dos secretos en
+GitHub (*Settings* → *Secrets and variables* → *Actions*). Una sola vez:
 
-1. Crear el Space:
+1. Crear un token en <https://vercel.com/account/tokens>, con el equipo propio como ámbito,
+   y guardarlo como secreto `VERCEL_TOKEN`.
+2. Crear un token de **escritura** en <https://huggingface.co/settings/tokens> y guardarlo
+   como secreto `HF_TOKEN`.
+3. Cambiar `PROYECTO_VERCEL` y `MODELOS_HF` en el workflow si se quieren otros nombres, y
+   lanzarlo a mano la primera vez (*Actions* → *Web y modelos* → *Run workflow*).
 
-   ```bash
-   hf repos create TU_USUARIO/prevision-brent --repo-type space --space-sdk static
-   ```
+La primera ejecución crea el proyecto en Vercel y el repositorio de modelos en Hugging Face.
+La dirección pública de la web aparece en el proyecto de Vercel, en *Domains*.
 
-2. Crear un token de **escritura** en <https://huggingface.co/settings/tokens> y guardarlo en
-   GitHub como secreto `HF_TOKEN` (*Settings* → *Secrets and variables* → *Actions*).
-3. Cambiar `SPACE` en [`.github/workflows/web.yml`](.github/workflows/web.yml) si tu usuario
-   no es `judithsalas`, y lanzar el workflow a mano la primera vez (*Actions* → *Web del
-   Space* → *Run workflow*).
+- **Vercel** recibe solo la web estática ya generada (`web/`). No hay que importar el
+  repositorio desde Vercel: el servidor FastAPI no se despliega allí.
+- **Hugging Face** recibe la carpeta [`models/`](models): los 9 modelos del estudio
+  (`final/`), los reentrenados cada mes (`app/`) y su ficha
+  ([`models/README.md`](models/README.md)). El workflow recupera de allí los reentrenados
+  en cada ejecución.
 
 Para generar la web en local sin subirla: `poetry run python -m scripts.exportar_web` (la deja
 en `web/`).
-
-### También en Vercel (opcional)
-
-El mismo workflow sube la web a Vercel si encuentra el secreto `VERCEL_TOKEN`; sin él, ese
-paso no hace nada. Una sola vez:
-
-1. Crear un token en <https://vercel.com/account/tokens>, con el equipo propio como ámbito.
-2. Guardarlo en GitHub como secreto `VERCEL_TOKEN` (*Settings* → *Secrets and variables* →
-   *Actions*).
-3. Lanzar el workflow. La primera vez crea en Vercel el proyecto `prevision-brent` (el nombre
-   está en `PROYECTO_VERCEL`, en el workflow); la dirección pública aparece en ese proyecto,
-   en *Domains*.
-
-No hay que importar el repositorio desde Vercel: el servidor FastAPI no se despliega allí,
-solo la web estática ya generada.
 
 ## Estructura
 
@@ -146,9 +138,10 @@ petroleo/         código del estudio
   graficas.py       curvas de aprendizaje, rejilla y test
 scripts/          los pasos 1 a 5 y la exportación de la web estática
 app/              la app web (lógica, servidor y página)
-.github/workflows/ publicación de la web en Hugging Face (en cada push y a diario)
+.github/workflows/ publica la web en Vercel y los modelos en Hugging Face (en cada push y a diario)
 configs/          parámetros del experimento
-models/final/     los 9 modelos finales (3 redes × 3 horizontes, 3 semillas cada uno)
+models/           final/: los 9 modelos finales (3 redes × 3 horizontes, 3 semillas cada uno);
+                  README.md: su ficha en Hugging Face
 docs/
   decisiones.md     por qué se hizo cada cosa, experimentos, resultados y limitaciones
   resultados/       CSV de rejilla, entrenamiento, test y comparativa (v1–v3 en subcarpetas)

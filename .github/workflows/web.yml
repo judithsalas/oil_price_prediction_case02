@@ -1,11 +1,12 @@
-# Mantiene al día la web estática del Space de Hugging Face.
-# - En cada push a main: sube la web con el código nuevo.
-# - Cada día laborable: descarga datos, recalcula la previsión y sube la web.
+# Mantiene al día la web de la previsión (Vercel) y los modelos (Hugging Face).
+# - En cada push a main: publica la web con el código nuevo.
+# - Cada día laborable: descarga datos, recalcula la previsión y publica la web.
 # - El día 1 de cada mes (o a mano, marcando "reentrenar"): además reentrena.
-# Los modelos reentrenados se guardan en el propio Space (models/app/) y se
-# recuperan en cada ejecución. Necesita el secreto HF_TOKEN (token de escritura).
-# Si además existe el secreto VERCEL_TOKEN, la misma web se publica también en Vercel.
-name: Web del Space
+# La web estática va a Vercel. A Hugging Face solo van los modelos: los del estudio
+# (models/final/), los reentrenados (models/app/, que se recuperan de allí en cada
+# ejecución) y su ficha (models/README.md).
+# Necesita los secretos VERCEL_TOKEN y HF_TOKEN (token de escritura).
+name: Web y modelos
 
 on:
   push:
@@ -21,8 +22,8 @@ on:
         default: false
 
 env:
-  SPACE: judithsalas/prevision-brent
-  PROYECTO_VERCEL: prevision-brent      # nombre del proyecto en Vercel
+  MODELOS_HF: judithsalas/prevision-brent      # repositorio de modelos en Hugging Face
+  PROYECTO_VERCEL: prevision-brent             # nombre del proyecto en Vercel
 
 jobs:
   web:
@@ -41,10 +42,10 @@ jobs:
           pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
           pip install -r app/requirements.txt huggingface_hub
 
-      - name: Recuperar los modelos reentrenados del Space
+      - name: Recuperar los modelos reentrenados de Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: hf download "$SPACE" --repo-type space --include "models/app/*" --local-dir . || true
+        run: hf download "$MODELOS_HF" --include "app/*" --local-dir models || true
 
       - name: Generar la web
         run: |
@@ -54,25 +55,17 @@ jobs:
             python -m scripts.exportar_web
           fi
 
-      - name: Subir al Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          hf upload "$SPACE" web . --repo-type space --commit-message "Previsión del $(date -u +%F)"
-          if [ -d models/app ]; then
-            hf upload "$SPACE" models/app models/app --repo-type space --commit-message "Modelos reentrenados"
-          fi
-
-      - name: Subir a Vercel (si hay token)
+      - name: Publicar la web en Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          if [ -z "$VERCEL_TOKEN" ]; then
-            echo "No hay secreto VERCEL_TOKEN: la web solo se publica en Hugging Face."
-            exit 0
-          fi
-          # La carpeta se llama como el proyecto y está fuera del repositorio: la primera
-          # vez Vercel crea el proyecto con ese nombre y después lo encuentra por él.
+          [ -n "$VERCEL_TOKEN" ] || { echo "Falta el secreto VERCEL_TOKEN"; exit 1; }
+          # La carpeta se llama como el proyecto y está fuera del repositorio: así
+          # Vercel encuentra el proyecto por su nombre (y lo crea si no existe).
           cp -r web "$RUNNER_TEMP/$PROYECTO_VERCEL"
-          rm -f "$RUNNER_TEMP/$PROYECTO_VERCEL/README.md"     # la ficha del Space no hace falta allí
           npx --yes vercel@66.2.0 deploy --prod --yes --cwd "$RUNNER_TEMP/$PROYECTO_VERCEL"
+
+      - name: Subir los modelos a Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: hf upload "$MODELOS_HF" models . --commit-message "Modelos del $(date -u +%F)"

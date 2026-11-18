@@ -1,4 +1,4 @@
-# Genera la web estática del Space de Hugging Face en web/: la página de
+# Genera en web/ la web estática que se publica en Vercel: la página de
 # app/static más datos.json con la previsión de hoy.
 #     poetry run python -m scripts.exportar_web [--reentrenar]
 # La ejecuta GitHub Actions (.github/workflows/web.yml): cada día laborable
@@ -28,7 +28,6 @@ def main():
     datos = {**prevision.resumen(), 'generado': datetime.now(timezone.utc).isoformat(timespec='minutes')}
 
     shutil.copytree(ESTATICOS, WEB, dirs_exist_ok=True)
-    shutil.copy(RAIZ / 'app' / 'README_space.md', WEB / 'README.md')
     (WEB / 'datos.json').write_text(json.dumps(datos, default=float, ensure_ascii=False))
     print(f'Web en {WEB}: previsión con datos hasta {datos["prevision"][0]["fecha_hoy"]}')
 

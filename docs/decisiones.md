@@ -440,12 +440,15 @@ El diseño visual está en `DESIGN.md`. Aquí van las decisiones de fondo.
 
 - **En local, con servidor** (`app/servidor.py`, FastAPI): la página pide los datos a
   la API y tiene botones para descargar datos y reentrenar.
-- **En Hugging Face, estática:** `scripts/exportar_web.py` vuelca la misma página y un
-  `datos.json` con todo ya calculado. Se eligió así porque los Spaces estáticos son
-  gratis y los de Docker exigen suscripción. A cambio, la página publicada no calcula
-  nada: la actualiza GitHub Actions (`.github/workflows/web.yml`), también en cada
-  push a `main`. El mismo workflow sube esa carpeta a Vercel si tiene un token: es otra
-  dirección para la misma web, no otro despliegue que mantener.
+- **Publicada en Vercel, estática:** `scripts/exportar_web.py` vuelca la misma página y
+  un `datos.json` con todo ya calculado, y GitHub Actions (`.github/workflows/web.yml`)
+  lo sube a Vercel cada día laborable y en cada push a `main`. Se eligió estática porque
+  el servidor guarda datos en disco y reentrena durante minutos, algo que los
+  alojamientos gratuitos no admiten. A cambio, la página publicada no calcula nada.
+- **Los modelos, en Hugging Face:** el mismo workflow sube `models/` a un repositorio de
+  modelos, con su ficha (`models/README.md`). Ahí se guardan también los reentrenados de
+  cada mes, que el workflow recupera en cada ejecución. La web estuvo primero en un
+  Space de Hugging Face; se pasó a Vercel para dejar en Hugging Face solo los modelos.
 
 ### Incorporar datos no es reentrenar
 
