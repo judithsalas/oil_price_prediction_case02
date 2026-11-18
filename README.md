@@ -72,7 +72,8 @@ poetry run python -m unittest
 
 ## La app
 
-- Elegir horizonte y ver el precio previsto, la variación sobre el último precio y el rango del 80 %.
+- Elegir horizonte y ver el rango en el que suele caer el precio (con las veces que acertó en
+  test), la previsión central con su variación sobre el último precio y la fecha de ese precio.
 - Un texto para no técnicos: qué dice la previsión, cuánto fiarse (según el test) y qué puede invalidarla.
 - El histórico desde 2000 con los picos y caídas del ciclo económico explicados.
 - **¿Acierta?**: el modelo de cada plazo en test (2021–2026) frente al precio real, con su rango

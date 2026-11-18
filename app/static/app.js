@@ -3,7 +3,7 @@ const EVENTOS = [
   { fecha: '2008-07-03', precio: 144, titulo: 'Máximo histórico',
     texto: 'Demanda récord de China y otros emergentes, oferta justa y un dólar débil: el ciclo mundial estaba en lo más alto.' },
   { fecha: '2008-12-26', precio: 34, titulo: 'Crisis financiera',
-    texto: 'La quiebra de Lehman Brothers en septiembre de 2008 hundió la economía y la demanda. El Brent perdió tres cuartas partes de su valor en cinco meses.' },
+    texto: 'La quiebra de Lehman Brothers en septiembre de 2008 hundió la economía y la demanda. El Brent perdió tres cuartas partes de su valor en menos de seis meses.' },
   { fecha: '2014-06-19', precio: 115, titulo: 'Empieza el exceso de oferta',
     texto: 'El petróleo de esquisto de EE. UU. inunda el mercado y en noviembre de 2014 la OPEP decide no recortar producción para defender su cuota.' },
   { fecha: '2016-01-20', precio: 26, titulo: 'Fondo de la caída 2014–2016',
@@ -15,7 +15,7 @@ const EVENTOS = [
   { fecha: '2025-12-16', precio: 60, titulo: 'Bajada gradual 2023–2025',
     texto: 'Demanda china más débil, producción récord fuera de la OPEP+ (EE. UU., Brasil, Guyana) y, en 2025, la OPEP+ deshaciendo parte de sus recortes.' },
   { fecha: '2026-04-07', precio: 138, titulo: 'Guerra de Irán y cierre de Ormuz',
-    texto: 'La guerra entre EE. UU. e Irán dejó prácticamente cerrado desde el 4 de marzo el estrecho de Ormuz, por donde pasa cerca de una quinta parte del petróleo y el gas del mundo. Qatar declaró fuerza mayor en sus exportaciones y el Brent pasó de unos 70 $ a más de 130 $ en un mes. Siguió muy volátil mientras se estancaban las negociaciones.' },
+    texto: 'La guerra entre EE. UU. e Irán dejó prácticamente cerrado desde el 4 de marzo el estrecho de Ormuz, por donde pasa cerca de una quinta parte del petróleo y el gas del mundo. Qatar declaró fuerza mayor en sus exportaciones y el Brent pasó de unos 70 $ a más de 130 $ en menos de seis semanas. Siguió muy volátil mientras se estancaban las negociaciones.' },
 ];
 
 const RIESGOS = {

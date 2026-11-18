@@ -169,7 +169,7 @@ aprendizaje 0,001 o 0,0001 = 12 combinaciones. Todo lo demás es fijo: Adam, lot
   redes pequeñas: se cambiaron por 16.
 - La tasa 0,0001 da pasos más pequeños y retrasa el sobreajuste. En la rejilla final
   ayuda sobre todo a 252 días (mejora media −21 % frente a −27 % con 0,001) y empata
-  en los otros dos; la eligen 5 de las 9 combinaciones finales.
+  en los otros dos; la eligen 4 de las 9 combinaciones finales.
 
 ### Tres semillas: que la mejora no sea suerte
 
@@ -321,9 +321,10 @@ p < 0,05 no basta para concluir nada.
 ### Tabla comparativa (`scripts/comparar.py`)
 
 `docs/resultados/comparativa.csv` junta, para cada red y horizonte, lo que pide el
-enunciado: R², MAE, MSE y RMSE sobre el precio en dólares, mejora frente al ingenuo (validación y test),
-parámetros, tiempo de entrenamiento y estabilidad entre semillas. No vuelve a
-evaluar: lee las previsiones de test ya guardadas.
+enunciado (MAE, MSE y RMSE sobre el precio en dólares, mejora frente al ingenuo en
+validación y test, parámetros y tiempo de entrenamiento), el R² que pidió después el
+profesor y la estabilidad entre semillas. No vuelve a evaluar: lee las previsiones de
+test ya guardadas.
 
 | | Validación 5 / 63 / 252 d | Test 5 / 63 / 252 d | RMSE test ($) 5 / 63 / 252 d | Parámetros 5 / 63 / 252 d | Segundos por semilla |
 |---|---|---|---|---|---|
@@ -363,13 +364,17 @@ siempre y se aplica aunque en test la LSTM sea la peor: cambiarla ahora por la G
 sería elegir con el test. Los cuatro repositorios de referencia hacen lo mismo, y a
 Rubén y Alejandro también les falló en test la red elegida en validación.
 
-Lo que la app debe decir con esto (enunciado, punto 5):
+Lo que la app dice con esto (enunciado, punto 5). La etiqueta de cada plazo sale del
+test (`fiabilidad` en `app/prevision.py`): "Aporta valor" solo si la red mejora al
+ingenuo con p < 0,05; "Orientativa" si no pierde más de un 5 % frente a él; si no, "No
+mejora al precio de hoy".
 
-- **1 semana:** la previsión es prácticamente el precio de hoy. Lo útil es el rango.
-- **3 meses:** en validación la LSTM mejoraba un 13 %, pero en test no se sostiene.
-  Valor bajo: orientativo.
-- **1 año:** ningún modelo bate al ingenuo en test. Solo vale el rango, y es poco fiable
-  (ver abajo).
+- **1 semana (−2,0 %): "Orientativa: empata con el precio de hoy".** La previsión es
+  prácticamente el precio de hoy. Lo útil es el rango.
+- **3 meses (−26 %): "No mejora al precio de hoy".** En validación la LSTM mejoraba un
+  13 %, pero en test no se sostiene. Vale como escenario, no como previsión.
+- **1 año (−55 %): "No mejora al precio de hoy".** Ningún modelo bate al ingenuo en
+  test. Solo vale el rango, y es poco fiable (ver abajo).
 
 ### Rango de incertidumbre (intervalo del 80 %)
 
@@ -422,8 +427,60 @@ de test, así que las cifras nuestras se recalcularon en sus mismas condiciones:
 retraso: su ingenuo normal es el precio de hace una semana, fácil de batir, y el de
 futuros estima el de hoy. Aquí se supone que el spot de hoy se conoce, así que nuestro
 ingenuo ya es la versión difícil; usar futuros posteriores a t sería una fuga. Además,
-a 63 y 252 días harían falta contratos a 3 y 12 meses, que no hay gratis. En la app,
-el precio de "hoy" debería tomarse del futuro más cercano (BZ=F) por ese retraso.
+a 63 y 252 días harían falta contratos a 3 y 12 meses, que no hay gratis. La app
+tampoco estima el precio de hoy con futuros: parte del último spot publicado y enseña
+su fecha y los días que tiene (ver "La app"). Tomarlo del futuro más cercano (BZ=F)
+queda como mejora posible.
+
+## La app (`app/`, `scripts/exportar_web.py`)
+
+El diseño visual está en `DESIGN.md`. Aquí van las decisiones de fondo.
+
+### Una página, dos formas de servirla
+
+- **En local, con servidor** (`app/servidor.py`, FastAPI): la página pide los datos a
+  la API y tiene botones para descargar datos y reentrenar.
+- **En Hugging Face, estática:** `scripts/exportar_web.py` vuelca la misma página y un
+  `datos.json` con todo ya calculado. Se eligió así porque los Spaces estáticos son
+  gratis y los de Docker exigen suscripción. A cambio, la página publicada no calcula
+  nada: la actualiza GitHub Actions (`.github/workflows/web.yml`), también en cada
+  push a `main`.
+
+### Incorporar datos no es reentrenar
+
+Son dos procesos distintos, con ritmos distintos:
+
+- **Cada día laborable se descargan los datos y se recalcula la previsión** con los
+  modelos ya entrenados: la red solo recibe la ventana de los últimos 60 días. No se
+  entrena nada.
+- **El día 1 de cada mes, además, se reentrena** el modelo elegido de cada plazo con
+  todos los datos hasta ese día, con la misma combinación de hiperparámetros y las
+  mismas 3 semillas; el final de los datos sirve para la parada temprana. No se repite
+  la búsqueda de hiperparámetros ni se cambia de red.
+- Los modelos reentrenados se guardan aparte (`models/app/`) y los del estudio
+  (`models/final/`) no se tocan. Las descargas de la app también van aparte
+  (`data/app_dataset.csv`).
+- **Lo que no cambia al reentrenar:** el rango y la etiqueta de fiabilidad siguen
+  siendo los del estudio. Un modelo reentrenado ya ha visto 2021–2026, así que no se
+  puede volver a medir en ese test.
+- Una descarga solo sustituye a los datos anteriores si trae todas las series que
+  esperan los modelos, y las de FRED se reintentan si el servidor falla: un mal día de
+  una fuente no deja la app sin datos.
+
+### Lo que enseña y cómo lo dice
+
+- **El rango va por delante de la cifra central.** Ninguna red mejora con claridad al
+  precio de hoy: enseñar la previsión central en grande prometería más de lo que el
+  test respalda. La cifra central se muestra, con su variación, pero atenuada.
+- **Se llama "rango habitual", no "rango del 80 %" a secas,** y se dice cuánto acertó
+  de verdad en test (71 %, 74 % y 52 %).
+- **El dato tiene fecha.** El spot se publica con unos 7 días de retraso: la app enseña
+  la fecha del último precio y los días que tiene, cuenta los plazos desde ese día y
+  avisa si la fecha prevista ya ha llegado.
+- **"¿Acierta?"** enseña el modelo de cada plazo en test frente al precio real, con su
+  rango, y año a año su error frente al precio de hoy y el acierto del rango.
+- El color solo marca la fiabilidad, nunca la subida o la bajada del precio: se leería
+  como bueno o malo.
 
 ## Relación con los apuntes de la asignatura (06_RNN)
 
