@@ -23,7 +23,9 @@ on:
         default: false
 
 env:
-  MODELOS_HF: judithsalas/prevision-brent      # repositorio de modelos en Hugging Face (el de URL en scripts/descargar_modelos.py)
+  # Repositorio de modelos en Hugging Face: el mismo de URL en scripts/descargar_modelos.py.
+  # Tiene que existir con ese nombre: si no, la subida crea uno nuevo y vacío.
+  MODELOS_HF: judithsalas/oil_price_prediction_case02
   PROYECTO_VERCEL: prevision-brent             # nombre del proyecto en Vercel
 
 jobs:

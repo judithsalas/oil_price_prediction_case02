@@ -7,7 +7,7 @@ horizonte se integra en una app web que da la previsión, su rango del 80 % y un
 en lenguaje sencillo.
 
 - **App:** <https://prevision-brent.vercel.app> (ver [Despliegue](#despliegue))
-- **Modelos:** <https://huggingface.co/judithsalas/prevision-brent>. No están en este
+- **Modelos:** <https://huggingface.co/judithsalas/oil_price_prediction_case02>. No están en este
   repositorio: la app los descarga de ahí la primera vez.
 - **Todas las decisiones, con su justificación:** [`docs/decisiones.md`](docs/decisiones.md)
 
@@ -50,7 +50,7 @@ poetry install
 ## Cómo reproducirlo, paso a paso
 
 Los resultados ya están en el repositorio y los modelos finales en
-[Hugging Face](https://huggingface.co/judithsalas/prevision-brent): para usar la app basta
+[Hugging Face](https://huggingface.co/judithsalas/oil_price_prediction_case02): para usar la app basta
 con el paso 6, que descarga los modelos la primera vez. Los pasos 1 a 5 rehacen el estudio
 desde cero. Para repetir solo la evaluación (pasos 4 y 5) con los modelos publicados, se
 bajan antes con `poetry run python -m scripts.descargar_modelos`.
@@ -115,7 +115,8 @@ reentrenados; solo necesita dos secretos en GitHub (*Settings* → *Secrets and 
    y guardarlo como secreto `VERCEL_TOKEN`.
 2. Crear un token de **escritura** en <https://huggingface.co/settings/tokens> y guardarlo
    como secreto `HF_TOKEN`.
-3. Si se quieren otros nombres, cambiar `PROYECTO_VERCEL` y `MODELOS_HF` en el workflow y
+3. Si se quieren otros nombres (o se renombra el repositorio de modelos en Hugging Face),
+   cambiar `PROYECTO_VERCEL` y `MODELOS_HF` en el workflow y
    `URL` en [`scripts/descargar_modelos.py`](scripts/descargar_modelos.py), y publicar
    antes los modelos del estudio en ese repositorio (ver abajo).
 4. Lanzarlo a mano la primera vez (*Actions* → *Web y modelos* → *Run workflow*).
@@ -131,7 +132,7 @@ el proyecto de Vercel, en *Domains*.
   si se rehace el estudio (pasos 1 a 3), con `pip install huggingface_hub`, `hf auth login` y:
 
   ```bash
-  hf upload judithsalas/prevision-brent models/final final
+  hf upload judithsalas/oil_price_prediction_case02 models/final final
   ```
 
 Para generar la web en local sin subirla: `poetry run python -m scripts.exportar_web` (la deja

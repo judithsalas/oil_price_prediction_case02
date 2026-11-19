@@ -7,7 +7,7 @@ from urllib.request import urlopen
 from petroleo.modelos import TIPOS
 from scripts.evaluar import MODELOS
 
-URL = 'https://huggingface.co/judithsalas/prevision-brent/resolve/main/final/'
+URL = 'https://huggingface.co/judithsalas/oil_price_prediction_case02/resolve/main/final/'
 HORIZONTES = ('corto', 'medio', 'largo')
 
 
