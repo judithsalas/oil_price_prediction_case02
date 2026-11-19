@@ -7,7 +7,8 @@ horizonte se integra en una app web que da la previsión, su rango del 80 % y un
 en lenguaje sencillo.
 
 - **App:** <https://prevision-brent.vercel.app> (ver [Despliegue](#despliegue))
-- **Modelos:** <https://huggingface.co/judithsalas/prevision-brent>
+- **Modelos:** <https://huggingface.co/judithsalas/prevision-brent>. No están en este
+  repositorio: la app los descarga de ahí la primera vez.
 - **Todas las decisiones, con su justificación:** [`docs/decisiones.md`](docs/decisiones.md)
 
 ## Resultado en una tabla
@@ -48,8 +49,11 @@ poetry install
 
 ## Cómo reproducirlo, paso a paso
 
-Los resultados y los modelos finales ya están en el repositorio: para usar la app basta con
-el paso 6. Los pasos 1 a 5 rehacen el estudio desde cero.
+Los resultados ya están en el repositorio y los modelos finales en
+[Hugging Face](https://huggingface.co/judithsalas/prevision-brent): para usar la app basta
+con el paso 6, que descarga los modelos la primera vez. Los pasos 1 a 5 rehacen el estudio
+desde cero. Para repetir solo la evaluación (pasos 4 y 5) con los modelos publicados, se
+bajan antes con `poetry run python -m scripts.descargar_modelos`.
 
 | Paso | Comando | Qué hace | Tiempo |
 |---|---|---|---|
@@ -90,10 +94,11 @@ Funciona de dos formas con la misma página ([`app/static/`](app/static)):
   datos hasta ese día. Cada push a `main` también publica la web, con el código nuevo. Y se
   puede lanzar a mano desde la pestaña *Actions* de GitHub (*Web y modelos* → *Run workflow*,
   con o sin "reentrenar").
-- **En local (con servidor):** `poetry run uvicorn app.servidor:app --port 7860`. Añade
+- **En local (con servidor):** `poetry run uvicorn app.servidor:app --port 7860`. Al
+  arrancar descarga de Hugging Face los modelos que falten en `models/final/`. Añade
   botones para **descargar datos nuevos** y **reentrenar** desde la propia página. Guarda las
-  descargas en `data/app_dataset.csv`, sin tocar el dataset del estudio, y los modelos en
-  `models/app/`.
+  descargas en `data/app_dataset.csv`, sin tocar el dataset del estudio, y los modelos
+  reentrenados en `models/app/`.
 
 La lógica es la misma en los dos casos ([`app/prevision.py`](app/prevision.py)):
 [`app/servidor.py`](app/servidor.py) la expone con FastAPI y
@@ -101,26 +106,33 @@ La lógica es la misma en los dos casos ([`app/prevision.py`](app/prevision.py))
 
 ## Despliegue
 
-La web va a Vercel y los modelos a Hugging Face. Lo hace todo el workflow
-([`.github/workflows/web.yml`](.github/workflows/web.yml)); solo necesita dos secretos en
-GitHub (*Settings* → *Secrets and variables* → *Actions*). Una sola vez:
+La web va a Vercel y los modelos están en Hugging Face. El workflow
+([`.github/workflows/web.yml`](.github/workflows/web.yml)) publica la web y sube los modelos
+reentrenados; solo necesita dos secretos en GitHub (*Settings* → *Secrets and variables* →
+*Actions*). Una sola vez:
 
 1. Crear un token en <https://vercel.com/account/tokens>, con el equipo propio como ámbito,
    y guardarlo como secreto `VERCEL_TOKEN`.
 2. Crear un token de **escritura** en <https://huggingface.co/settings/tokens> y guardarlo
    como secreto `HF_TOKEN`.
-3. Cambiar `PROYECTO_VERCEL` y `MODELOS_HF` en el workflow si se quieren otros nombres, y
-   lanzarlo a mano la primera vez (*Actions* → *Web y modelos* → *Run workflow*).
+3. Si se quieren otros nombres, cambiar `PROYECTO_VERCEL` y `MODELOS_HF` en el workflow y
+   `URL` en [`scripts/descargar_modelos.py`](scripts/descargar_modelos.py), y publicar
+   antes los modelos del estudio en ese repositorio (ver abajo).
+4. Lanzarlo a mano la primera vez (*Actions* → *Web y modelos* → *Run workflow*).
 
-La primera ejecución crea el proyecto en Vercel y el repositorio de modelos en Hugging Face.
-La dirección pública de la web aparece en el proyecto de Vercel, en *Domains*.
+La primera ejecución crea el proyecto en Vercel. La dirección pública de la web aparece en
+el proyecto de Vercel, en *Domains*.
 
 - **Vercel** recibe solo la web estática ya generada (`web/`). No hay que importar el
   repositorio desde Vercel: el servidor FastAPI no se despliega allí.
-- **Hugging Face** recibe la carpeta [`models/`](models): los 9 modelos del estudio
-  (`final/`), los reentrenados cada mes (`app/`) y su ficha
-  ([`models/README.md`](models/README.md)). El workflow recupera de allí los reentrenados
-  en cada ejecución.
+- **Hugging Face** guarda los modelos, que no están en git. El workflow sube su ficha
+  ([`models/README.md`](models/README.md)) y los reentrenados cada mes (`app/`), que
+  recupera de allí en cada ejecución. Los 9 del estudio (`final/`) se publican a mano, solo
+  si se rehace el estudio (pasos 1 a 3), con `pip install huggingface_hub`, `hf auth login` y:
+
+  ```bash
+  hf upload judithsalas/prevision-brent models/final final
+  ```
 
 Para generar la web en local sin subirla: `poetry run python -m scripts.exportar_web` (la deja
 en `web/`).
@@ -135,12 +147,12 @@ petroleo/         código del estudio
   entrenamiento.py  entrenamiento con parada temprana, L2, dropout y recorte de gradiente
   evaluacion.py     Diebold-Mariano, Ridge y acierto de dirección
   graficas.py       curvas de aprendizaje, rejilla y test
-scripts/          los pasos 1 a 5 y la exportación de la web estática
+scripts/          los pasos 1 a 5, la descarga de modelos y la exportación de la web estática
 app/              la app web (lógica, servidor y página)
 .github/workflows/ publica la web en Vercel y los modelos en Hugging Face (en cada push y a diario)
 configs/          parámetros del experimento
-models/           final/: los 9 modelos finales (3 redes × 3 horizontes, 3 semillas cada uno);
-                  README.md: su ficha en Hugging Face
+models/           README.md: la ficha de los modelos en Hugging Face. Los modelos no están en git:
+                  final/ (3 redes × 3 horizontes, 3 semillas cada uno) se descarga o se entrena
 docs/
   decisiones.md     por qué se hizo cada cosa, experimentos, resultados y limitaciones
   resultados/       CSV de rejilla, entrenamiento, test y comparativa (v1–v3 en subcarpetas)

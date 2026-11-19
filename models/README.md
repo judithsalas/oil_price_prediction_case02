@@ -19,6 +19,9 @@ Modelos del Caso de uso III de Aprendizaje automático. Predicen el precio del B
 - **Código, datos y metodología:** <https://github.com/judithsalas/oil_price_prediction_case02>
 - **App que los usa:** <https://prevision-brent.vercel.app>
 
+Los modelos solo están aquí. El repositorio de GitHub no los incluye: su app los descarga
+de este repositorio la primera vez.
+
 ## Qué hay aquí
 
 | Carpeta | Contenido |
@@ -49,7 +52,14 @@ central. Los modelos de `app/` ya han visto 2021–2026: estas cifras son las de
 
 ## Cómo usarlos
 
-Hace falta el código del repositorio de GitHub:
+Hace falta el código del repositorio de GitHub. Desde su carpeta raíz, este comando deja
+los modelos del estudio en `models/final/`:
+
+```bash
+poetry run python -m scripts.descargar_modelos
+```
+
+Y con ellos:
 
 ```python
 import numpy as np
@@ -59,7 +69,7 @@ from petroleo.datos import descargar
 from petroleo.preproceso import ultima_ventana
 from scripts.evaluar import prediccion_red
 
-ruta = 'final/gru_corto.pt'
+ruta = 'models/final/gru_corto.pt'
 guardado = torch.load(ruta, weights_only=False)
 X, dia, precio = ultima_ventana(descargar(), guardado['escalador'], guardado['ventana'])
 previsto = precio * np.exp(float(prediccion_red(ruta, X)[0]))

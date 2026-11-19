@@ -215,7 +215,8 @@ Con `scripts/entrenar.py --final`, la combinación elegida de cada red y horizon
 reentrena con las 3 semillas en la partición final (train 2000–2017, validación
 2018–2020). Las 3 redes se guardan juntas en `models/final/<red>_<horizonte>.pt` con
 su escalador, y la predicción es la media de las 3: más estable que una sola red. Son
-9 ficheros pequeños que se suben al repositorio para que la app funcione sin entrenar.
+9 ficheros pequeños (1,4 MB en total) que se publican en Hugging Face, no en git: la
+app los descarga la primera vez y así funciona sin entrenar (ver "La app").
 
 ### Gráficas (`docs/figuras/`)
 
@@ -461,10 +462,15 @@ van las decisiones de fondo.
   lo sube a Vercel cada día laborable y en cada push a `main`. Se eligió estática porque
   el servidor guarda datos en disco y reentrena durante minutos, algo que los
   alojamientos gratuitos no admiten. A cambio, la página publicada no calcula nada.
-- **Los modelos, en Hugging Face:** el mismo workflow sube `models/` a un repositorio de
-  modelos, con su ficha (`models/README.md`). Ahí se guardan también los reentrenados de
-  cada mes, que el workflow recupera en cada ejecución. La web estuvo primero en un
-  Space de Hugging Face; se pasó a Vercel para dejar en Hugging Face solo los modelos.
+- **Los modelos, solo en Hugging Face:** son binarios, así que no van en git; el
+  repositorio de GitHub guarda el código y los resultados, y enlaza al repositorio de
+  modelos. `scripts/descargar_modelos.py` baja los del estudio que falten en
+  `models/final/`; lo llaman el servidor al arrancar y `scripts/exportar_web.py`, así que
+  la app sigue funcionando con solo clonar el repositorio. Los del estudio se publican
+  a mano (solo cambian si se rehace el estudio). El workflow sube la ficha
+  (`models/README.md`) y los reentrenados de cada mes, que recupera en cada ejecución.
+  La web estuvo primero en un Space de Hugging Face; se pasó a Vercel para dejar en
+  Hugging Face solo los modelos.
 
 ### Incorporar datos no es reentrenar
 

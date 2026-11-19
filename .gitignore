@@ -237,7 +237,9 @@ graphify-out/
 docs/resultados/**/predicciones_val_*.csv.gz
 docs/resultados/**/log_*.txt
 
-# Modelos reentrenados desde la app
+# Modelos: solo en Hugging Face (la app los descarga, ver README). En git queda su
+# ficha, models/README.md
+models/final/
 models/app/
 
 # Web estática generada por scripts/exportar_web.py

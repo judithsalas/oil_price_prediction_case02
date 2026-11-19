@@ -10,7 +10,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 from app import prevision
+from scripts.descargar_modelos import descargar as descargar_modelos
 
+descargar_modelos()     # los modelos no están en git: la primera vez se bajan de Hugging Face
 app = FastAPI(title='Previsión del Brent')
 estado = {'tarea': None, 'mensaje': '', 'error': None}
 ocupado = threading.Lock()

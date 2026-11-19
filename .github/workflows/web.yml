@@ -2,9 +2,10 @@
 # - En cada push a main: publica la web con el código nuevo.
 # - Cada día laborable: descarga datos, recalcula la previsión y publica la web.
 # - El día 1 de cada mes (o a mano, marcando "reentrenar"): además reentrena.
-# La web estática va a Vercel. A Hugging Face solo van los modelos: los del estudio
-# (models/final/), los reentrenados (models/app/, que se recuperan de allí en cada
-# ejecución) y su ficha (models/README.md).
+# La web estática va a Vercel. Los modelos solo están en Hugging Face, no en git:
+# - los del estudio (final/) los baja de allí scripts/exportar_web.py;
+# - los reentrenados (app/) se recuperan y se vuelven a subir en cada ejecución,
+#   junto con la ficha (models/README.md).
 # Necesita los secretos VERCEL_TOKEN y HF_TOKEN (token de escritura).
 name: Web y modelos
 
@@ -22,7 +23,7 @@ on:
         default: false
 
 env:
-  MODELOS_HF: judithsalas/prevision-brent      # repositorio de modelos en Hugging Face
+  MODELOS_HF: judithsalas/prevision-brent      # repositorio de modelos en Hugging Face (el de URL en scripts/descargar_modelos.py)
   PROYECTO_VERCEL: prevision-brent             # nombre del proyecto en Vercel
 
 jobs:
@@ -65,7 +66,8 @@ jobs:
           cp -r web "$RUNNER_TEMP/$PROYECTO_VERCEL"
           npx --yes vercel@66.2.0 deploy --prod --yes --cwd "$RUNNER_TEMP/$PROYECTO_VERCEL"
 
-      - name: Subir los modelos a Hugging Face
+      # final/ no se sube desde aquí: los modelos del estudio se publican a mano (ver README)
+      - name: Subir a Hugging Face la ficha y los modelos reentrenados
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: hf upload "$MODELOS_HF" models . --commit-message "Modelos del $(date -u +%F)"
+        run: hf upload "$MODELOS_HF" models . --exclude "final/*" --commit-message "Modelos del $(date -u +%F)"

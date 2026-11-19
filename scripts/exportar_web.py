@@ -9,6 +9,7 @@ import shutil
 from datetime import datetime, timezone
 
 from app import prevision
+from scripts.descargar_modelos import descargar as descargar_modelos
 from scripts.evaluar import RAIZ
 
 ESTATICOS = RAIZ / 'app' / 'static'
@@ -21,6 +22,7 @@ def main():
     args.add_argument('--sin-descarga', action='store_true', help='usa los datos que ya hay')
     args = args.parse_args()
 
+    descargar_modelos()     # los modelos no están en git: se bajan de Hugging Face
     if not args.sin_descarga:
         prevision.actualizar_datos()
     if args.reentrenar:
